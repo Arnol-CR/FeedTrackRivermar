@@ -12,22 +12,31 @@
   max-width: 100%;
 }
 
+.contenido {
+  background: #F8FAFC;
+}
+
 #tabla-reporte {
   width: 100%;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
 #tabla-reporte thead th {
-  background: #4285F4;
+  background: #1E3A8A;
   color: white;
-  padding: 0.85rem 1rem;
-  font-size: 0.85rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   position: sticky;
   top: 0;
   text-align: center;
+}
+
+#tabla-reporte tbody tr {
+  border-bottom: 1px solid #e2e8f0;
 }
 
 #tabla-reporte tbody tr:nth-child(even) {
@@ -39,12 +48,43 @@
 }
 
 #tabla-reporte td {
-  padding: 0.85rem 1rem;
-  font-size: 0.9rem;
-  vertical-align: top;
+  padding: 0.55rem 1.2rem;
+  font-size: 0.95rem;
+  vertical-align: middle;
   text-align: center;
 }
 
+/* Columnas clave: Ración, Libras consumo, % — más grandes y en negrita (solo tabla principal, no el historial anidado) */
+#tabla-reporte > tbody > tr > td:nth-child(5),
+#tabla-reporte > tbody > tr > td:nth-child(6),
+#tabla-reporte > tbody > tr > td:nth-child(7) {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #1E3A8A;
+}
+
+/* Columnas de texto largo (lecturas): permitir salto de línea */
+#tabla-reporte > tbody > tr > td:nth-child(8),
+#tabla-reporte > tbody > tr > td:nth-child(9) {
+  max-width: 170px;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+/* Ajuste 1 y Ajuste 2: los inputs se controlan por su propio ancho fijo en el JS, no por la columna */
+.col-ajuste {
+  width: 70px;
+}
+
+/* Botones de exportar con iconos más grandes */
+#btn-exportar-excel,
+#btn-copiar-imagen {
+  font-size: 1rem;
+  padding: 0.75rem 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
 #form-reporte {
   display: flex;
@@ -75,9 +115,18 @@
 section {
   background: white;
   border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+section.formulario {
+  padding: 1.25rem 1.5rem;
+}
+
+section.formulario h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.3rem;
 }
 
 form {

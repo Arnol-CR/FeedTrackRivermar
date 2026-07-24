@@ -59,21 +59,26 @@
           </section>
 
           <section class="lista">
-            <h2>Resultados</h2>
-            <p id="resumen-filtros" style="color:#6b7280; margin-top:-0.5rem; margin-bottom:1rem;"></p>
-             <div style="display:flex; gap:0.75rem; margin-bottom:1rem;">
-                <button type="button" id="btn-exportar-excel" style="background:#0F9D58; color:white; border:none; padding:0.6rem 1rem; border-radius:6px; cursor:pointer;">📊 Exportar a Excel</button>
-                <button type="button" id="btn-copiar-imagen" style="background:#DB4437; color:white; border:none; padding:0.6rem 1rem; border-radius:6px; cursor:pointer;">🖼️ Copiar imagen</button>
-              </div>
-            <div style="overflow-x:auto">
-              <table id="tabla-reporte">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; margin-bottom:0.5rem;">
+  <div>
+    <h2 style="margin:0;">Resultados</h2>
+    <p id="resumen-filtros" style="color:#6b7280; margin:0.2rem 0 0 0;"></p>
+  </div>
+  <div style="display:flex; gap:0.75rem;">
+    <button type="button" id="btn-exportar-excel" style="background:#0F9D58; color:white; border:none; padding:0.6rem 1rem; border-radius:6px; cursor:pointer;">📊 Exportar a Excel</button>
+    <button type="button" id="btn-copiar-imagen" style="background:#DB4437; color:white; border:none; padding:0.6rem 1rem; border-radius:6px; cursor:pointer;">🖼️ Copiar imagen</button>
+  </div>
+</div>
+<div style="overflow-x:auto">
+  <table id="tabla-reporte">
                 <thead>
                   <tr>
+                    <th></th>
                     <th>Laguna - Modo Alimentación</th>
                     <th>Ajuste 1</th>
                     <th>Ajuste 2</th>
                     <th>Ración</th>
-                    <th>Libras consumo</th>
+                    <th>Consumo 50% (lb)</th>
                     <th>%</th>
                     <th>Lectura mañana</th>
                     <th>Lectura tarde</th>

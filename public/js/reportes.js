@@ -149,63 +149,172 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
   tbody.innerHTML = filas.map((f, i) => {
     const racionExistente = mapaRacionesExistentes[f.IdEstanque];
     const valorInicialRacion = (racionExistente !== undefined && racionExistente !== null)
-      ? racionExistente
+      ? Number(racionExistente).toLocaleString('es-HN', { maximumFractionDigits: 2 })
       : '';
 
     const ajustes = mapaAjustesExistentes[f.IdEstanque] || {};
-    const valorAjuste1 = (ajustes.ajuste1 !== undefined && ajustes.ajuste1 !== null) ? ajustes.ajuste1 : '';
-    const valorAjuste2 = (ajustes.ajuste2 !== undefined && ajustes.ajuste2 !== null) ? ajustes.ajuste2 : '';
+    const valorAjuste1 = (ajustes.ajuste1 !== undefined && ajustes.ajuste1 !== null)
+      ? Number(ajustes.ajuste1).toLocaleString('es-HN', { maximumFractionDigits: 2 })
+      : '';
+    const valorAjuste2 = (ajustes.ajuste2 !== undefined && ajustes.ajuste2 !== null)
+      ? Number(ajustes.ajuste2).toLocaleString('es-HN', { maximumFractionDigits: 2 })
+      : '';
 
     return `
     <tr>
+      <td>
+        <div style="display:flex; justify-content:center;">
+  <button type="button" onclick="toggleHistorial(${i}, ${f.IdEstanque})"
+          id="btn-historial-${i}"
+          style="background:transparent; color:#0F9D58; border:none; cursor:pointer; font-weight:bold; font-size:1.4rem; line-height:1; padding:0.2rem;">+</button>
+</div>
+      </td>
       <td>${f.NombreRecipiente ?? ''}</td>
       <td>
-        <input type="number" step="0.01" id="ajuste1-${i}" value="${valorAjuste1}"
-               oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
-               style="width:90px; padding:0.4rem; border:1px solid #cbd2d9; border-radius:4px;">
+        <input type="text" inputmode="decimal" id="ajuste1-${i}" name="ajuste1-${i}" autocomplete="off" value="${valorAjuste1}"
+          oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
+          onfocus="limpiarCampoParaEditar(this)"
+          onblur="formatearCampo(this)"
+          style="width:65px; padding:0.4rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center;">
       </td>
       <td>
-        <input type="number" step="0.01" id="ajuste2-${i}" value="${valorAjuste2}"
-               oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
-               style="width:90px; padding:0.4rem; border:1px solid #cbd2d9; border-radius:4px;">
+       <input type="text" inputmode="decimal" id="ajuste2-${i}" name="ajuste2-${i}" autocomplete="off" value="${valorAjuste2}"
+       oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
+       onfocus="limpiarCampoParaEditar(this)"
+       onblur="formatearCampo(this)"
+       style="width:65px; padding:0.4rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center;">
+
         <span id="estado-ajuste-${i}" style="font-size:0.8rem; display:block; margin-top:0.2rem;"></span>
       </td>
       <td>${formatearNumero(f.Racion)}</td>
-<td>${formatearNumero(f.LibrasConsumo)}</td>
+      <td>${formatearNumero(f.LibrasConsumo)}</td>
       <td>${badgePorcentaje(f.Porcentaje)}</td>
-      <td>${f.LecturaMañana ?? ''}</td>
-      <td>${f.LecturaTarde ?? ''}</td>
+<td>${badgeEstado(f.LecturaMañana)}</td>
+<td>${badgeEstado(f.LecturaTarde)}</td>
       <td>
-        <div style="display:flex; gap:0.4rem; align-items:center;">
-          <input type="number" step="0.01" min="0" placeholder="Ración"
-                 id="racion-siguiente-${i}" value="${valorInicialRacion}"
-                 oninput="onCambioRacion(${i}, ${f.IdEstanque})"
-                 style="width:100px; padding:0.4rem; border:1px solid #cbd2d9; border-radius:4px;">
+        <div style="display:flex; gap:0.4rem; align-items:center; justify-content:center;">
+          <input type="text" inputmode="decimal" placeholder="Ración"
+              id="racion-siguiente-${i}" name="racion-siguiente-${i}" autocomplete="off" value="${valorInicialRacion}"
+              oninput="onCambioRacion(${i}, ${f.IdEstanque})"
+              onfocus="limpiarCampoParaEditar(this)"
+              onblur="formatearCampo(this)"
+              style="width:80px; padding:0.4rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center;">
           <span id="estado-racion-${i}" style="font-size:0.8rem;"></span>
         </div>
+      </td>
+    </tr>
+    <tr id="fila-historial-${i}" style="display:none;">
+      <td colspan="10" style="background:#f4f5f7; padding:0;">
+        <div id="contenido-historial-${i}" style="padding:1rem 2rem;">Cargando...</div>
       </td>
     </tr>
   `;
   }).join('');
 }
 
+async function toggleHistorial(indice, idEstanque) {
+  const fila = document.getElementById(`fila-historial-${indice}`);
+  const boton = document.getElementById(`btn-historial-${indice}`);
+  const abierta = fila.style.display !== 'none';
+
+  if (abierta) {
+    fila.style.display = 'none';
+    boton.textContent = '+';
+    return;
+  }
+
+  fila.style.display = 'table-row';
+  boton.textContent = '−';
+
+  const contenido = document.getElementById(`contenido-historial-${indice}`);
+  contenido.innerHTML = 'Cargando...';
+
+  try {
+    const res = await fetch(`/api/reportes/historial?idEstanque=${idEstanque}&fecha=${inputFecha.value}`, {
+      headers: authHeaders()
+    });
+    await manejarRespuesta(res);
+    const dias = await res.json();
+
+    if (dias.length === 0) {
+      contenido.innerHTML = '<em>Sin historial disponible.</em>';
+      return;
+    }
+
+    contenido.innerHTML = `
+      <div style="background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+      <div style="padding:0.75rem 1rem 0; font-weight:600; color:#1E3A8A; font-size:0.85rem;">📅 Historial — últimos 6 días</div>  
+      <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+        <thead>
+  <tr style="background:#DBEAFE; color:#1E3A8A;">
+    <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Fecha</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Consumo 100%/Ración</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">%</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Ajuste 1</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Ajuste 2</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">O₂ mañana</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">O₂ Noche</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">C° Mañana</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">C° Tarde</th>
+    <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Lectura Mañana</th>
+    <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Lectura Tarde</th>
+  </tr>
+</thead>
+          <tbody>
+            ${dias.map((d, i) => `
+              <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f8f9fb'};">
+                <td style="padding:0.6rem 0.8rem; white-space:nowrap;">${formatearFecha(d.Fecha)}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem; white-space:nowrap;">${formatearNumero(d.LibrasConsumo)} / ${formatearNumero(d.Racion)}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${badgePorcentaje(d.Porcentaje)}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${d.Ajuste1 ? formatearNumero(d.Ajuste1) : '-'}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${d.Ajuste2 ? formatearNumero(d.Ajuste2) : '-'}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeOxigenoManana(d.OxigenoManana)}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeOxigenoNoche(d.OxigenoHora3)}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${d.TemperaturaManana ?? '-'}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${d.TemperaturaTarde ?? '-'}</td>
+                <td style="padding:0.6rem 0.8rem;">${badgeEstado(d.LecturaMañana)}</td>
+                <td style="padding:0.6rem 0.8rem;">${badgeEstado(d.LecturaTarde)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (err) {
+    console.error('Error al cargar historial:', err);
+    contenido.innerHTML = '<em style="color:#b91c1c;">Error al cargar el historial.</em>';
+  }
+}
+
+
+function formatearFecha(fechaISO) {
+  const f = new Date(fechaISO);
+  const dia = String(f.getUTCDate()).padStart(2, '0');
+  const mes = String(f.getUTCMonth() + 1).padStart(2, '0');
+  const anio = f.getUTCFullYear();
+  return `${dia}/${mes}/${anio}`;
+}
+
+
 function onCambioAjuste(indice, idEstanque) {
   const estado = document.getElementById(`estado-ajuste-${indice}`);
   estado.textContent = '';
+  estado.style.color = '';
 
   clearTimeout(timersAjustes[indice]);
   timersAjustes[indice] = setTimeout(() => {
     guardarAjustes(indice, idEstanque);
   }, 800);
 }
-
 async function guardarAjustes(indice, idEstanque) {
   const inputAjuste1 = document.getElementById(`ajuste1-${indice}`);
   const inputAjuste2 = document.getElementById(`ajuste2-${indice}`);
   const estado = document.getElementById(`estado-ajuste-${indice}`);
 
-  if ((inputAjuste1.value !== '' && isNaN(inputAjuste1.value)) ||
-      (inputAjuste2.value !== '' && isNaN(inputAjuste2.value))) {
+  const valor1 = limpiarNumero(inputAjuste1.value);
+  const valor2 = limpiarNumero(inputAjuste2.value);
+
+  if ((valor1 !== '' && isNaN(valor1)) || (valor2 !== '' && isNaN(valor2))) {
     estado.textContent = 'Número inválido';
     estado.style.color = '#b91c1c';
     return;
@@ -221,8 +330,8 @@ async function guardarAjustes(indice, idEstanque) {
       body: JSON.stringify({
         idEstanque,
         fecha: inputFecha.value,
-        ajuste1: inputAjuste1.value === '' ? null : Number(inputAjuste1.value),
-        ajuste2: inputAjuste2.value === '' ? null : Number(inputAjuste2.value)
+        ajuste1: valor1 === '' ? null : Number(valor1),
+        ajuste2: valor2 === '' ? null : Number(valor2)
       })
     });
     await manejarRespuesta(res);
@@ -243,6 +352,7 @@ async function guardarAjustes(indice, idEstanque) {
   }
 }
 
+
 function onCambioRacion(indice, idEstanque) {
   const estado = document.getElementById(`estado-racion-${indice}`);
   estado.textContent = '';
@@ -255,15 +365,59 @@ function onCambioRacion(indice, idEstanque) {
 
 function badgePorcentaje(valor) {
   const pct = Number(valor) || 0;
-  let color = '#b91c1c'; // rojo: <= 50
-  if (pct > 55) color = '#15803d'; // verde: > 55
-  else if (pct > 50) color = '#a16207'; // amarillo: 50.01 a 55
-  return `<span style="background:${color}1a; color:${color}; padding:0.2rem 0.6rem; border-radius:999px; font-weight:600; font-size:0.8rem;">${pct}%</span>`;
+  let color = '#EF4444'; // rojo: <= 50
+  if (pct > 55) color = '#10B981'; // verde: > 55
+  else if (pct > 50) color = '#F59E0B'; // amarillo: 50.01–55
+  return `<span style="background:${color}22; color:${color}; padding:0.35rem 0.85rem; border-radius:999px; font-weight:700; font-size:0.9rem;">${pct}%</span>`;
+}
+
+function badgeOxigenoManana(valor) {
+  if (valor === null || valor === undefined || valor === '') return '-';
+  const num = Number(valor);
+  let color = '#EF4444'; // rojo: 0 - 1.99
+  if (num >= 2.5) color = '#10B981'; // verde: 2.5 - 100
+  else if (num >= 2) color = '#F59E0B'; // amarillo: 2 - 2.49
+  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.8rem;">${num}</span>`;
+}
+
+function badgeOxigenoNoche(valor) {
+  if (valor === null || valor === undefined || valor === '') return '-';
+  const num = Number(valor);
+  let color = '#EF4444'; // rojo: 0 - 5.49
+  if (num >= 6) color = '#10B981'; // verde: 6 - 100
+  else if (num >= 5.5) color = '#F59E0B'; // amarillo: 5.5 - 5.99
+  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.8rem;">${num}</span>`;
+}
+
+function badgeEstado(texto) {
+  if (!texto || texto.trim() === '') return '';
+  const t = texto.toUpperCase();
+
+  const tieneBarrida = t.includes('BARRIDA');
+  const tieneProblema = t.includes('MUERTO') || t.includes('ROJOS');
+
+  // Combo: barrida (bien) + problema (mal) a la vez
+  if (tieneBarrida && tieneProblema) {
+    return `<span style="display:inline-block; padding:0.2rem 0.6rem; border-radius:5px; font-size:0.7rem; font-weight:600; white-space:normal; background:linear-gradient(90deg, #d1fae5 50%, #fee2e2 50%); color:#1f2933; border-left:3px solid #10B981; border-right:3px solid #EF4444;">${texto}</span>`;
+  }
+
+  let color = '#475569', fondo = '#e2e8f0';
+
+  if (tieneProblema) { color = '#EF4444'; fondo = '#fee2e2'; }
+  else if (t.includes('PAUSA')) { color = '#F59E0B'; fondo = '#fef3c7'; }
+  else if (tieneBarrida) { color = '#10B981'; fondo = '#d1fae5'; }
+  else if (t.includes('RALEO') || t.includes('COSECHA')) { color = '#1E3A8A'; fondo = '#dbeafe'; }
+  else if (t.includes('POCOS GRANOS') || t.includes('NO BARRE')) { color = '#EA580C'; fondo = '#fed7aa'; }
+
+  return `<span style="display:inline-block; background:${fondo}; color:${color}; padding:0.2rem 0.6rem; border-radius:5px; font-size:0.7rem; font-weight:600; white-space:normal;">${texto}</span>`;
 }
 
 
 function limpiarNumero(texto) {
-  return String(texto ?? '').replace(/,/g, '').trim();
+  return String(texto ?? '')
+    .replace(/,/g, '')
+    .replace(/[^\d.\-]/g, '')
+    .trim();
 }
 
 function formatearCampo(input) {
@@ -408,7 +562,7 @@ async function construirElementoParaImagen() {
     input.replaceWith(span);
   });
 tablaClonada.querySelectorAll('tr').forEach(tr => {
-  const celda = tr.children[8]; // columna "Ración día siguiente"
+  const celda = tr.children[9]; // columna "Ración día siguiente"
   if (celda) {
     celda.style.background = '#0f799a';
     celda.style.fontWeight = 'bold';
