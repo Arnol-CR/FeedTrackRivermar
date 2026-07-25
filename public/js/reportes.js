@@ -270,8 +270,8 @@ async function toggleHistorial(indice, idEstanque) {
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${d.Ajuste2 ? formatearNumero(d.Ajuste2) : '-'}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeOxigenoManana(d.OxigenoManana)}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeOxigenoNoche(d.OxigenoHora3)}</td>
-                <td style="text-align:center; padding:0.6rem 0.8rem;">${d.TemperaturaManana ?? '-'}</td>
-                <td style="text-align:center; padding:0.6rem 0.8rem;">${d.TemperaturaTarde ?? '-'}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeTemperatura(d.TemperaturaManana)}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeTemperatura(d.TemperaturaTarde)}</td>
                 <td style="padding:0.6rem 0.8rem;">${badgeEstado(d.LecturaMañana)}</td>
                 <td style="padding:0.6rem 0.8rem;">${badgeEstado(d.LecturaTarde)}</td>
               </tr>
@@ -389,6 +389,15 @@ function badgeOxigenoNoche(valor) {
   return `<span style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.8rem;">${num}</span>`;
 }
 
+function badgeTemperatura(valor) {
+  if (valor === null || valor === undefined || valor === '') return '-';
+  const num = Number(valor);
+  let color = '#3B82F6'; // azul: menor a 28
+  if (num > 32) color = '#EF4444'; // rojo: mayor a 32
+  else if (num >= 28) color = '#10B981'; // verde: 28 a 32
+  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:${color}; color:white; font-weight:700; font-size:0.8rem;">${num}</span>`;
+}
+
 function badgeEstado(texto) {
   if (!texto || texto.trim() === '') return '';
   const t = texto.toUpperCase();
@@ -502,21 +511,23 @@ function formatearNumero(valor) {
 cargarCombos();
 document.getElementById('btn-exportar-excel').addEventListener('click', exportarExcel);
 document.getElementById('btn-copiar-imagen').addEventListener('click', copiarImagen);
-
 function leerFilasVisibles() {
   const filas = [];
-  document.querySelectorAll('#tabla-reporte tbody tr').forEach(tr => {
+  document.querySelectorAll('#tabla-reporte > tbody > tr').forEach(tr => {
+    // Salta las filas de historial (tienen colspan, no las de datos)
+    if (tr.querySelector('td[colspan]')) return;
+
     const c = tr.querySelectorAll('td');
     filas.push({
-      'Recipiente': c[0].textContent.trim(),
-      'Ajuste 1': (c[1].querySelector('input')?.value || '').replace(/,/g, ''),
-      'Ajuste 2': (c[2].querySelector('input')?.value || '').replace(/,/g, ''),
-      'Ración': c[3].textContent.replace(/,/g, '').trim(),
-      'Libras consumo': c[4].textContent.replace(/,/g, '').trim(),
-      '%': c[5].textContent.trim(),
-      'Lectura mañana': c[6].textContent.trim(),
-      'Lectura tarde': c[7].textContent.trim(),
-      'Ración día siguiente': (c[8].querySelector('input')?.value || '').replace(/,/g, '')
+      'Recipiente': c[1].textContent.trim(),
+      'Ajuste 1': (c[2].querySelector('input')?.value || '').replace(/,/g, ''),
+      'Ajuste 2': (c[3].querySelector('input')?.value || '').replace(/,/g, ''),
+      'Ración': c[4].textContent.replace(/,/g, '').trim(),
+      'Libras consumo': c[5].textContent.replace(/,/g, '').trim(),
+      '%': c[6].textContent.trim(),
+      'Lectura mañana': c[7].textContent.trim(),
+      'Lectura tarde': c[8].textContent.trim(),
+      'Ración día siguiente': (c[9].querySelector('input')?.value || '').replace(/,/g, '')
     });
   });
   return filas;
@@ -561,6 +572,22 @@ async function construirElementoParaImagen() {
     span.textContent = input.value || '-';
     input.replaceWith(span);
   });
+
+// Quitar del clon las filas cuyo historial NO está desplegado
+const filasHistorial = Array.from(tablaClonada.querySelectorAll('tr[id^="fila-historial-"]'));
+const algunaAbierta = filasHistorial.some(f => f.style.display !== 'none');
+
+if (algunaAbierta) {
+  filasHistorial.forEach(filaHist => {
+    const oculta = filaHist.style.display === 'none';
+    if (oculta) {
+      const filaPrincipal = filaHist.previousElementSibling;
+      if (filaPrincipal) filaPrincipal.remove();
+      filaHist.remove();
+    }
+  });
+}
+
 tablaClonada.querySelectorAll('tr').forEach(tr => {
   const celda = tr.children[9]; // columna "Ración día siguiente"
   if (celda) {
