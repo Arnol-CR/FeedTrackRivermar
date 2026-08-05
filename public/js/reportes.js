@@ -164,6 +164,11 @@ if (inputBuscarLaguna) {
     );
 
     renderTabla(filtradas, mapaRacionesActual, mapaAjustesActual);
+
+    // Si la búsqueda encontró exactamente una laguna, despliega su historial solo
+    if (filtradas.length === 1) {
+      toggleHistorial(0, filtradas[0].IdEstanque);
+    }
   });
 }
 
