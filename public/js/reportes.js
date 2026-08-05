@@ -240,6 +240,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
 </div>
       </td>
       <td data-label="Laguna" style="font-weight:700; font-size:0.78rem;">${f.NombreRecipiente ?? ''}</td>
+      <td data-label="Peso (g)">${badgePeso(f.PesoGramos)}</td>
       <td data-label="Ajuste 1">
         <input type="text" inputmode="decimal" id="ajuste1-${i}" name="ajuste1-${i}" autocomplete="off" value="${valorAjuste1}"
           oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
@@ -259,6 +260,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
       <td data-label="Ración">${formatearNumero(f.Racion)}</td>
       <td data-label="Consumo 50% (lb)">${formatearNumero(f.LibrasConsumo)}</td>
       <td data-label="%">${badgePorcentaje(f.Porcentaje)}</td>
+      
 <td data-label="O2 mañana">${badgeOxigenoManana(f.OxigenoManana)}</td>
 <td data-label="O2 noche">${badgeOxigenoNoche(f.OxigenoNoche)}</td>
 <td data-label="Temp. mañana">${badgeTemperatura(f.TemperaturaManana)}</td>
@@ -278,7 +280,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
       </td>
     </tr>
     <tr id="fila-historial-${i}" style="display:none;">
-      <td colspan="14" style="background:#f4f5f7; padding:0;">
+      <td colspan="15" style="background:#f4f5f7; padding:0;">
         <div id="contenido-historial-${i}" style="padding:1rem 2rem;">Cargando...</div>
       </td>
     </tr>
@@ -451,7 +453,7 @@ function badgeOxigenoManana(valor) {
   let color = '#EF4444';
   if (num >= 2.5) color = '#10B981';
   else if (num >= 2) color = '#F59E0B';
-  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.68rem;">${num}</span>`;
+  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.68rem;">${num}</span>`;
 }
 
 function badgeOxigenoNoche(valor) {
@@ -460,7 +462,7 @@ function badgeOxigenoNoche(valor) {
   let color = '#EF4444';
   if (num >= 6) color = '#10B981';
   else if (num >= 5.5) color = '#F59E0B';
-  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.68rem;">${num}</span>`;
+  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.68rem;">${num}</span>`;
 }
 
 function badgeTemperatura(valor) {
@@ -469,7 +471,7 @@ function badgeTemperatura(valor) {
   let color = '#3B82F6';
   if (num > 32) color = '#EF4444';
   else if (num >= 28) color = '#10B981';
-  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:${color}; color:white; font-weight:700; font-size:0.68rem;">${num}</span>`;
+  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:${color}; color:white; font-weight:700; font-size:0.68rem;">${num}</span>`;
 }
 function badgeEstado(texto) {
   if (!texto || texto.trim() === '') return '';
@@ -522,6 +524,12 @@ function mostrarResumenFiltros() {
 
   const resumenImpresion = document.getElementById('resumen-impresion');
   if (resumenImpresion) resumenImpresion.textContent = texto;
+}
+
+function badgePeso(valor) {
+  if (valor === null || valor === undefined || valor === '') return '-';
+  const num = Number(valor);
+  return `<span style="font-weight:700; color:#1E3A8A; font-size:0.72rem;">${num.toFixed(1)} g</span>`;
 }
 
 async function guardarRacionSiguiente(indice, idEstanque) {
@@ -671,7 +679,7 @@ async function construirElementoParaImagen() {
   }
 
   tablaClonada.querySelectorAll('tr').forEach(tr => {
-    const celda = tr.children[13]; // columna "Ración día siguiente"
+    const celda = tr.children[14]; // columna "Ración día siguiente"
     if (celda) {
       celda.style.background = '#0f799a';
       celda.style.fontWeight = 'bold';

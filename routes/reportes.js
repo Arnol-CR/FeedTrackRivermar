@@ -63,8 +63,19 @@ router.get('/racion', async (req, res) => {
         GROUP BY L.IdEstanque
       `);
 
+      const pesoResult = await pool.request()
+        .input('Fecha', sql.Date, fecha)
+        .query(`
+          SELECT IdEstanque, [Peso (g) Proyectado] AS PesoGramos
+          FROM PBI_Bitacoras
+          WHERE Fecha = @Fecha AND IdEstanque IN (${idsEstanques.join(',')})
+        `);
+
       const mapaLecturas = {};
       lecturasResult.recordset.forEach(r => { mapaLecturas[r.IdEstanque] = r; });
+
+      const mapaPeso = {};
+      pesoResult.recordset.forEach(r => { mapaPeso[r.IdEstanque] = r.PesoGramos; });
 
       filas.forEach(f => {
         const l = mapaLecturas[f.IdEstanque] || {};
@@ -72,6 +83,7 @@ router.get('/racion', async (req, res) => {
         f.OxigenoNoche = l.OxigenoNoche ?? null;
         f.TemperaturaManana = l.TemperaturaManana ?? null;
         f.TemperaturaTarde = l.TemperaturaTarde ?? null;
+        f.PesoGramos = mapaPeso[f.IdEstanque] ?? null;
       });
     }
 
