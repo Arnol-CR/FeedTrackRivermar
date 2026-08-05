@@ -26,7 +26,6 @@ router.get('/tipos-recipientes', async (req, res) => {
   }
 });
 
-// GET /api/reportes/racion?fecha=YYYY-MM-DD&idSector=1&idRecipiente=2
 router.get('/racion', async (req, res) => {
   const { fecha, idSector, idRecipiente } = req.query;
 
@@ -42,7 +41,41 @@ router.get('/racion', async (req, res) => {
       .input('IdRecipiente', sql.Int, idRecipiente)
       .execute('sp_ReporteRacion');
 
-    res.json(result.recordset);
+    const filas = result.recordset;
+
+    if (filas.length > 0) {
+      const idsEstanques = [...new Set(filas.map(f => f.IdEstanque))];
+      const request2 = pool.request().input('Fecha', sql.Date, fecha);
+      const placeholders = idsEstanques.map((id, i) => {
+        request2.input(`id${i}`, sql.Int, id);
+        return `@id${i}`;
+      }).join(',');
+
+      const lecturasResult = await request2.query(`
+        SELECT
+          L.IdEstanque,
+          MAX(CASE WHEN L.IdHora = 1 THEN L.Oxigeno END) AS OxigenoManana,
+          MAX(CASE WHEN L.IdHora = 3 THEN L.Oxigeno END) AS OxigenoNoche,
+          MAX(CASE WHEN L.IdHora = 1 THEN L.Temperatura END) AS TemperaturaManana,
+          MAX(CASE WHEN L.IdHora = 2 THEN L.Temperatura END) AS TemperaturaTarde
+        FROM Lecturas L
+        WHERE L.Fecha = @Fecha AND L.IdEstanque IN (${placeholders})
+        GROUP BY L.IdEstanque
+      `);
+
+      const mapaLecturas = {};
+      lecturasResult.recordset.forEach(r => { mapaLecturas[r.IdEstanque] = r; });
+
+      filas.forEach(f => {
+        const l = mapaLecturas[f.IdEstanque] || {};
+        f.OxigenoManana = l.OxigenoManana ?? null;
+        f.OxigenoNoche = l.OxigenoNoche ?? null;
+        f.TemperaturaManana = l.TemperaturaManana ?? null;
+        f.TemperaturaTarde = l.TemperaturaTarde ?? null;
+      });
+    }
+
+    res.json(filas);
   } catch (err) {
     console.error('Error al generar el reporte de ración:', err);
     res.status(500).json({ error: 'Error al generar el reporte', detalle: err.message });

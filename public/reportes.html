@@ -39,7 +39,7 @@
       <main class="contenido">
         <div class="contenedor-reportes">
           <section class="formulario">
-            <h2>Reporte de Ración</h2>
+            
             <form id="form-reporte">
               <div class="campo-reporte">
                 <label for="fecha">Fecha</label>
@@ -54,37 +54,75 @@
                 <select id="tipo-recipiente" required></select>
               </div>
               <button type="submit">Consultar</button>
+                <div class="campo-reporte">
+                  <label for="buscar-laguna">Buscar laguna</label>
+                  <input type="text" id="buscar-laguna" placeholder="🔍 Ej: 31, Timer...">
+                </div>
             </form>
             <div id="mensaje-reporte" class="mensaje-error" hidden></div>
           </section>
-
+                    <div id="encabezado-impresion" style="display:none;">
+  <div style="display:flex; align-items:center; gap:0.6rem; border-bottom:2px solid #1E3A8A; padding-bottom:0.5rem; margin-bottom:0.75rem;">
+    <img src="img/logo.png" alt="FeedTrack" style="width:38px; height:38px;">
+    <div>
+      <div style="font-size:1.1rem; font-weight:700; color:#1f2933;">FeedTrack Web Rivermar</div>
+      <div style="font-size:0.95rem; font-weight:600; color:#1E3A8A;">Bitácora</div>
+      <div id="resumen-impresion" style="font-size:0.8rem; color:#6b7280;"></div>
+    </div>
+  </div>
+</div>
           <section class="lista">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; margin-bottom:0.5rem;">
-  <div>
-    <h2 style="margin:0;">Resultados</h2>
+ 
+              <div>
+      <div id="titulo-resultados">
+  <h2 style="margin:0;">Bitacora</h2>
+  <p id="resumen-filtros" style="color:#6b7280; margin:0.2rem 0 0 0;"></p>
+</div>
     <p id="resumen-filtros" style="color:#6b7280; margin:0.2rem 0 0 0;"></p>
   </div>
-  <div style="display:flex; gap:0.75rem;">
-    <button type="button" id="btn-exportar-excel" style="background:#0F9D58; color:white; border:none; padding:0.6rem 1rem; border-radius:6px; cursor:pointer;">📊 Exportar a Excel</button>
-    <button type="button" id="btn-copiar-imagen" style="background:#DB4437; color:white; border:none; padding:0.6rem 1rem; border-radius:6px; cursor:pointer;">🖼️ Copiar imagen</button>
-  </div>
+<div id="botones-accion" style="display:flex; gap:0.75rem;">
+  <button type="button" id="btn-exportar-excel" style="background:#0F9D58; color:white; border:none; padding:0.6rem 1rem; border-radius:6px; cursor:pointer;">📊 Exportar a Excel</button>
+  <button type="button" id="btn-copiar-imagen" style="background:#DB4437; color:white; border:none; padding:0.6rem 1rem; border-radius:6px; cursor:pointer;">🖼️ Copiar imagen</button>
+  <button type="button" id="btn-imprimir" style="background:#6B7280; color:white; border:none; padding:0.6rem 1rem; border-radius:6px; cursor:pointer;">🖨️ Imprimir</button>
+</div>
 </div>
 <div style="overflow-x:auto">
   <table id="tabla-reporte">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Laguna - Modo Alimentación</th>
-                    <th>Ajuste 1</th>
-                    <th>Ajuste 2</th>
-                    <th>Ración</th>
-                    <th>Consumo 50% (lb)</th>
-                    <th>%</th>
-                    <th>Lectura mañana</th>
-                    <th>Lectura tarde</th>
-                    <th>Ración día siguiente</th>
-                  </tr>
-                </thead>
+                <colgroup>
+              <col style="width:2.5%">  <!-- botón +/- -->
+              <col style="width:12%">    <!-- Laguna - Modo alimentación -->
+              <col style="width:4.5%">  <!-- Ajuste 1 -->
+              <col style="width:4.5%">  <!-- Ajuste 2 -->
+              <col style="width:5%">    <!-- Ración -->
+              <col style="width:6%">    <!-- Libras consumo -->
+              <col style="width:5%">    <!-- % -->
+              <col style="width:4.5%">  <!-- O2 mañana -->
+              <col style="width:4.5%">  <!-- O2 noche -->
+              <col style="width:4.5%">  <!-- Temp mañana -->
+              <col style="width:4.5%">  <!-- Temp tarde -->
+              <col style="width:15%">   <!-- Lectura mañana -->
+              <col style="width:15%">   <!-- Lectura tarde -->
+              <col style="width:10%">   <!-- Ración día siguiente -->
+            </colgroup>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Laguna - Modo Alimentación</th>
+                  <th>Ajuste 1</th>
+                  <th>Ajuste 2</th>
+                  <th>Ración</th>
+                  <th>Consumo 50% (lb)</th>
+                  <th>%</th>
+                  <th>O₂ Mañana</th>
+                  <th>O₂ Noche</th>
+                  <th>C° Mañana</th>
+                  <th>C° Tarde</th>
+                  <th>Lectura mañana</th>
+                  <th>Lectura tarde</th>
+                  <th>Ración día siguiente</th>
+                </tr>
+              </thead>
                 <tbody></tbody>
               </table>
             </div>

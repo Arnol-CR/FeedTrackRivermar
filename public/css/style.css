@@ -26,10 +26,10 @@
 #tabla-reporte thead th {
   background: #1E3A8A;
   color: white;
-  padding: 0.6rem 0.9rem;
-  font-size: 0.78rem;
+  padding: 0.5rem 0.4rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   position: sticky;
   top: 0;
   text-align: center;
@@ -48,18 +48,17 @@
 }
 
 #tabla-reporte td {
-  padding: 0.55rem 1.2rem;
-  font-size: 0.95rem;
+  padding: 0.4rem 0.3rem;
+  font-size: 0.75rem;
   vertical-align: middle;
   text-align: center;
 }
 
-/* Columnas clave: Ración, Libras consumo, % — más grandes y en negrita (solo tabla principal, no el historial anidado) */
+/* Columnas clave: Ración, Consumo — en negrita pero mismo tamaño que el resto */
 #tabla-reporte > tbody > tr > td:nth-child(5),
-#tabla-reporte > tbody > tr > td:nth-child(6),
-#tabla-reporte > tbody > tr > td:nth-child(7) {
+#tabla-reporte > tbody > tr > td:nth-child(6) {
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 0.75rem;
   color: #1E3A8A;
 }
 
@@ -188,4 +187,150 @@ th, td {
 .btn-editar {
   background: #6b7280;
   margin-right: 0.5rem;
+}
+
+
+/* ===== Tabla como tarjetas apiladas en pantallas angostas (sin scroll horizontal) ===== */
+@media screen and (max-width: 900px) {
+  #tabla-reporte,
+  #tabla-reporte thead,
+  #tabla-reporte tbody,
+  #tabla-reporte th,
+  #tabla-reporte td,
+  #tabla-reporte tr {
+    display: block;
+  }
+
+  #tabla-reporte thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  #tabla-reporte tbody tr {
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  #tabla-reporte td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  #tabla-reporte td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #1E3A8A;
+    text-align: left;
+    padding-right: 1rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+
+  /* Celda del botón +/-: sin etiqueta, centrada arriba */
+  #tabla-reporte td[data-label=""] {
+    justify-content: center;
+    background: #F8FAFC;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  #tabla-reporte td[data-label=""]::before {
+    content: none;
+  }
+
+  /* Fila de historial: vuelve a comportarse como bloque normal, no como fila de tabla */
+  #tabla-reporte tr[id^="fila-historial-"] td {
+    display: block;
+    text-align: left;
+  }
+  #tabla-reporte tr[id^="fila-historial-"] td::before {
+    content: none;
+  }
+}
+
+#tabla-reporte input[id^="ajuste1"],
+#tabla-reporte input[id^="ajuste2"] {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0.25rem !important;
+  font-size: 0.7rem !important;
+}
+
+#tabla-reporte input[id^="racion-siguiente"] {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0.3rem !important;
+  font-size: 0.75rem !important;
+}
+
+@media print {
+  .sidebar,
+  .topbar,
+  section.formulario,
+  #botones-accion,
+  #buscar-laguna,
+  label[for="buscar-laguna"],
+  #titulo-resultados {
+    display: none !important;
+  }
+
+    #encabezado-impresion {
+    display: block !important;
+  }
+
+  body, .contenido {
+    background: white !important;
+  }
+
+  #tabla-reporte {
+    box-shadow: none !important;
+    font-size: 0.55rem !important;
+  }
+
+    .contenedor-reportes div[style*="overflow-x:auto"] {
+    overflow: visible !important;
+  }
+  
+  #tabla-reporte thead th {
+    padding: 0.25rem 0.2rem !important;
+    font-size: 0.5rem !important;
+  }
+
+  #tabla-reporte td {
+    padding: 0.2rem 0.15rem !important;
+    font-size: 0.55rem !important;
+  }
+
+  /* Oculta la última columna (Ración día siguiente) al imprimir */
+  #tabla-reporte thead th:last-child,
+  #tabla-reporte tbody tr td:last-child {
+    display: none !important;
+  }
+
+  /* Círculos de O2/Temperatura más chicos al imprimir */
+  #tabla-reporte span[style*="border-radius:50%"] {
+    width: 18px !important;
+    height: 18px !important;
+    font-size: 0.5rem !important;
+  }
+
+  #tabla-reporte tbody tr {
+    page-break-inside: avoid;
+  }
+
+  .contenido {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .app-shell, .main-area {
+    height: auto !important;
+    overflow: visible !important;
+  }
 }

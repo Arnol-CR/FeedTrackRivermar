@@ -4,6 +4,10 @@ const inputFecha = document.getElementById('fecha');
 const form = document.getElementById('form-reporte');
 const tbody = document.querySelector('#tabla-reporte tbody');
 const mensajeReporte = document.getElementById('mensaje-reporte');
+let filasActuales = [];
+let sectoresDisponibles = [];
+let mapaRacionesActual = {};
+let mapaAjustesActual = {};
 
 // Fecha por defecto: hoy (en hora local, no UTC)
 function fechaLocalHoy() {
@@ -36,15 +40,31 @@ async function cargarCombos() {
     const sectores = await resSectores.json();
     const tipos = await resTipos.json();
 
-const SECTORES_EXCLUIDOS = ['EXPOMARE', 'LAS DELICIAS', 'ACUAGOLFO'];
+    const SECTORES_EXCLUIDOS = ['EXPOMARE', 'LAS DELICIAS', 'ACUAGOLFO'];
+    let yaHayTodas = false;
 
-selectSector.innerHTML = sectores
-  .filter(s => {
-    const nombre = obtenerEtiqueta(s, 'IdSector').toUpperCase().trim();
-    return !nombre.startsWith('TODA') && !SECTORES_EXCLUIDOS.includes(nombre);
-  })
-  .map(s => `<option value="${s.IdSector}">${obtenerEtiqueta(s, 'IdSector')}</option>`)
-  .join('');
+    const listaSectores = sectores
+      .filter(s => {
+        const nombre = obtenerEtiqueta(s, 'IdSector').toUpperCase().trim();
+        if (SECTORES_EXCLUIDOS.includes(nombre)) return false;
+        if (nombre.startsWith('TODA')) {
+          if (yaHayTodas) return false;
+          yaHayTodas = true;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const na = obtenerEtiqueta(a, 'IdSector').toUpperCase();
+        const nb = obtenerEtiqueta(b, 'IdSector').toUpperCase();
+        if (na.startsWith('TODA')) return -1;
+        if (nb.startsWith('TODA')) return 1;
+        return 0;
+      });
+
+    selectSector.innerHTML = listaSectores
+      .map(s => `<option value="${s.IdSector}">${obtenerEtiqueta(s, 'IdSector')}</option>`)
+      .join('');
+          sectoresDisponibles = listaSectores;
 
     selectTipoRecipiente.innerHTML = tipos.map(t =>
       `<option value="${t.IdTipoRecimiente}">${obtenerEtiqueta(t, 'IdTipoRecimiente')}</option>`
@@ -60,20 +80,44 @@ form.addEventListener('submit', async (e) => {
   ocultarError();
   tbody.innerHTML = '';
 
-  const params = new URLSearchParams({
-    fecha: inputFecha.value,
-    idSector: selectSector.value,
-    idRecipiente: selectTipoRecipiente.value
-  });
+  const textoSectorSeleccionado = selectSector.options[selectSector.selectedIndex]?.text || '';
+  const esTodas = textoSectorSeleccionado.toUpperCase().startsWith('TODA');
 
   try {
-    const res = await fetch(`/api/reportes/racion?${params}`, { headers: authHeaders() });
-    await manejarRespuesta(res);
-    const data = await res.json();
+    let data = [];
 
-    if (!res.ok) {
-      mostrarError(data.detalle || data.error || 'No se pudo generar el reporte');
-      return;
+    if (esTodas) {
+      const sectoresReales = sectoresDisponibles.filter(s =>
+        !obtenerEtiqueta(s, 'IdSector').toUpperCase().startsWith('TODA')
+      );
+
+      for (const sector of sectoresReales) {
+        const paramsSector = new URLSearchParams({
+          fecha: inputFecha.value,
+          idSector: sector.IdSector,
+          idRecipiente: selectTipoRecipiente.value
+        });
+        const resSector = await fetch(`/api/reportes/racion?${paramsSector}`, { headers: authHeaders() });
+        await manejarRespuesta(resSector);
+        if (resSector.ok) {
+          const dataSector = await resSector.json();
+          data = data.concat(dataSector);
+        }
+      }
+    } else {
+      const params = new URLSearchParams({
+        fecha: inputFecha.value,
+        idSector: selectSector.value,
+        idRecipiente: selectTipoRecipiente.value
+      });
+      const res = await fetch(`/api/reportes/racion?${params}`, { headers: authHeaders() });
+      await manejarRespuesta(res);
+      data = await res.json();
+
+      if (!res.ok) {
+        mostrarError(data.detalle || data.error || 'No se pudo generar el reporte');
+        return;
+      }
     }
 
     const filas = data.filter(f =>
@@ -87,15 +131,41 @@ form.addEventListener('submit', async (e) => {
       return;
     }
 
-const mapaRacionesExistentes = await obtenerRacionesExistentes(filas);
-const mapaAjustesExistentes = await obtenerAjustesExistentes(filas);
-mostrarResumenFiltros();
-renderTabla(filas, mapaRacionesExistentes, mapaAjustesExistentes);
+    const mapaRacionesExistentes = await obtenerRacionesExistentes(filas);
+    const mapaAjustesExistentes = await obtenerAjustesExistentes(filas);
+
+    filasActuales = filas;
+    mapaRacionesActual = mapaRacionesExistentes;
+    mapaAjustesActual = mapaAjustesExistentes;
+
+    const inputBuscar = document.getElementById('buscar-laguna');
+    if (inputBuscar) inputBuscar.value = '';
+
+    mostrarResumenFiltros();
+    renderTabla(filas, mapaRacionesExistentes, mapaAjustesExistentes);
   } catch (err) {
     console.error('Error al generar el reporte:', err);
     mostrarError('Error de conexión al generar el reporte');
   }
 });
+
+const inputBuscarLaguna = document.getElementById('buscar-laguna');
+if (inputBuscarLaguna) {
+  inputBuscarLaguna.addEventListener('input', (e) => {
+    const texto = e.target.value.trim().toLowerCase();
+
+    if (texto === '') {
+      renderTabla(filasActuales, mapaRacionesActual, mapaAjustesActual);
+      return;
+    }
+
+    const filtradas = filasActuales.filter(f =>
+      (f.NombreRecipiente ?? '').toLowerCase().includes(texto)
+    );
+
+    renderTabla(filtradas, mapaRacionesActual, mapaAjustesActual);
+  });
+}
 
 function calcularFechaSiguiente() {
   const fechaSeleccionada = new Date(inputFecha.value + 'T00:00:00');
@@ -162,49 +232,53 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
 
     return `
     <tr>
-      <td>
+      <td data-label="">
         <div style="display:flex; justify-content:center;">
   <button type="button" onclick="toggleHistorial(${i}, ${f.IdEstanque})"
           id="btn-historial-${i}"
           style="background:transparent; color:#0F9D58; border:none; cursor:pointer; font-weight:bold; font-size:1.4rem; line-height:1; padding:0.2rem;">+</button>
 </div>
       </td>
-      <td>${f.NombreRecipiente ?? ''}</td>
-      <td>
+      <td data-label="Laguna" style="font-weight:700; font-size:0.78rem;">${f.NombreRecipiente ?? ''}</td>
+      <td data-label="Ajuste 1">
         <input type="text" inputmode="decimal" id="ajuste1-${i}" name="ajuste1-${i}" autocomplete="off" value="${valorAjuste1}"
           oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
           onfocus="limpiarCampoParaEditar(this)"
           onblur="formatearCampo(this)"
-          style="width:65px; padding:0.4rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center;">
+          style="width:100%; box-sizing:border-box; padding:0.25rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center; font-size:0.7rem;">
       </td>
-      <td>
+      <td data-label="Ajuste 2">
        <input type="text" inputmode="decimal" id="ajuste2-${i}" name="ajuste2-${i}" autocomplete="off" value="${valorAjuste2}"
        oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
        onfocus="limpiarCampoParaEditar(this)"
        onblur="formatearCampo(this)"
-       style="width:65px; padding:0.4rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center;">
+       style="width:100%; box-sizing:border-box; padding:0.25rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center; font-size:0.7rem;">
 
-        <span id="estado-ajuste-${i}" style="font-size:0.8rem; display:block; margin-top:0.2rem;"></span>
+        <span id="estado-ajuste-${i}" style="font-size:0.65rem; display:block; margin-top:0.15rem;"></span>
       </td>
-      <td>${formatearNumero(f.Racion)}</td>
-      <td>${formatearNumero(f.LibrasConsumo)}</td>
-      <td>${badgePorcentaje(f.Porcentaje)}</td>
-<td>${badgeEstado(f.LecturaMañana)}</td>
-<td>${badgeEstado(f.LecturaTarde)}</td>
-      <td>
+      <td data-label="Ración">${formatearNumero(f.Racion)}</td>
+      <td data-label="Consumo 50% (lb)">${formatearNumero(f.LibrasConsumo)}</td>
+      <td data-label="%">${badgePorcentaje(f.Porcentaje)}</td>
+<td data-label="O2 mañana">${badgeOxigenoManana(f.OxigenoManana)}</td>
+<td data-label="O2 noche">${badgeOxigenoNoche(f.OxigenoNoche)}</td>
+<td data-label="Temp. mañana">${badgeTemperatura(f.TemperaturaManana)}</td>
+<td data-label="Temp. tarde">${badgeTemperatura(f.TemperaturaTarde)}</td>
+<td data-label="Lectura mañana">${badgeEstado(f.LecturaMañana)}</td>
+<td data-label="Lectura tarde">${badgeEstado(f.LecturaTarde)}</td>
+      <td data-label="Ración día siguiente">
         <div style="display:flex; gap:0.4rem; align-items:center; justify-content:center;">
           <input type="text" inputmode="decimal" placeholder="Ración"
               id="racion-siguiente-${i}" name="racion-siguiente-${i}" autocomplete="off" value="${valorInicialRacion}"
               oninput="onCambioRacion(${i}, ${f.IdEstanque})"
               onfocus="limpiarCampoParaEditar(this)"
               onblur="formatearCampo(this)"
-              style="width:80px; padding:0.4rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center;">
-          <span id="estado-racion-${i}" style="font-size:0.8rem;"></span>
+              style="width:100%; box-sizing:border-box; padding:0.3rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center; font-size:0.75rem;">
+          <span id="estado-racion-${i}" style="font-size:0.7rem;"></span>
         </div>
       </td>
     </tr>
     <tr id="fila-historial-${i}" style="display:none;">
-      <td colspan="10" style="background:#f4f5f7; padding:0;">
+      <td colspan="14" style="background:#f4f5f7; padding:0;">
         <div id="contenido-historial-${i}" style="padding:1rem 2rem;">Cargando...</div>
       </td>
     </tr>
@@ -368,36 +442,35 @@ function badgePorcentaje(valor) {
   let color = '#EF4444'; // rojo: <= 50
   if (pct > 55) color = '#10B981'; // verde: > 55
   else if (pct > 50) color = '#F59E0B'; // amarillo: 50.01–55
-  return `<span style="background:${color}22; color:${color}; padding:0.35rem 0.85rem; border-radius:999px; font-weight:700; font-size:0.9rem;">${pct}%</span>`;
+  return `<span style="background:${color}22; color:${color}; padding:0.2rem 0.5rem; border-radius:999px; font-weight:700; font-size:0.7rem; white-space:nowrap;">${pct}%</span>`;
 }
 
 function badgeOxigenoManana(valor) {
   if (valor === null || valor === undefined || valor === '') return '-';
   const num = Number(valor);
-  let color = '#EF4444'; // rojo: 0 - 1.99
-  if (num >= 2.5) color = '#10B981'; // verde: 2.5 - 100
-  else if (num >= 2) color = '#F59E0B'; // amarillo: 2 - 2.49
-  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.8rem;">${num}</span>`;
+  let color = '#EF4444';
+  if (num >= 2.5) color = '#10B981';
+  else if (num >= 2) color = '#F59E0B';
+  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.68rem;">${num}</span>`;
 }
 
 function badgeOxigenoNoche(valor) {
   if (valor === null || valor === undefined || valor === '') return '-';
   const num = Number(valor);
-  let color = '#EF4444'; // rojo: 0 - 5.49
-  if (num >= 6) color = '#10B981'; // verde: 6 - 100
-  else if (num >= 5.5) color = '#F59E0B'; // amarillo: 5.5 - 5.99
-  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.8rem;">${num}</span>`;
+  let color = '#EF4444';
+  if (num >= 6) color = '#10B981';
+  else if (num >= 5.5) color = '#F59E0B';
+  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:${color}22; color:${color}; font-weight:700; font-size:0.68rem;">${num}</span>`;
 }
 
 function badgeTemperatura(valor) {
   if (valor === null || valor === undefined || valor === '') return '-';
   const num = Number(valor);
-  let color = '#3B82F6'; // azul: menor a 28
-  if (num > 32) color = '#EF4444'; // rojo: mayor a 32
-  else if (num >= 28) color = '#10B981'; // verde: 28 a 32
-  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:${color}; color:white; font-weight:700; font-size:0.8rem;">${num}</span>`;
+  let color = '#3B82F6';
+  if (num > 32) color = '#EF4444';
+  else if (num >= 28) color = '#10B981';
+  return `<span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:${color}; color:white; font-weight:700; font-size:0.68rem;">${num}</span>`;
 }
-
 function badgeEstado(texto) {
   if (!texto || texto.trim() === '') return '';
   const t = texto.toUpperCase();
@@ -405,9 +478,8 @@ function badgeEstado(texto) {
   const tieneBarrida = t.includes('BARRIDA');
   const tieneProblema = t.includes('MUERTO') || t.includes('ROJOS');
 
-  // Combo: barrida (bien) + problema (mal) a la vez
   if (tieneBarrida && tieneProblema) {
-    return `<span style="display:inline-block; padding:0.2rem 0.6rem; border-radius:5px; font-size:0.7rem; font-weight:600; white-space:normal; background:linear-gradient(90deg, #d1fae5 50%, #fee2e2 50%); color:#1f2933; border-left:3px solid #10B981; border-right:3px solid #EF4444;">${texto}</span>`;
+    return `<span style="display:inline-block; padding:0.15rem 0.4rem; border-radius:5px; font-size:0.65rem; font-weight:600; white-space:normal; background:linear-gradient(90deg, #d1fae5 50%, #fee2e2 50%); color:#1f2933; border-left:2px solid #10B981; border-right:2px solid #EF4444;">${texto}</span>`;
   }
 
   let color = '#475569', fondo = '#e2e8f0';
@@ -418,7 +490,7 @@ function badgeEstado(texto) {
   else if (t.includes('RALEO') || t.includes('COSECHA')) { color = '#1E3A8A'; fondo = '#dbeafe'; }
   else if (t.includes('POCOS GRANOS') || t.includes('NO BARRE')) { color = '#EA580C'; fondo = '#fed7aa'; }
 
-  return `<span style="display:inline-block; background:${fondo}; color:${color}; padding:0.2rem 0.6rem; border-radius:5px; font-size:0.7rem; font-weight:600; white-space:normal;">${texto}</span>`;
+  return `<span style="display:inline-block; background:${fondo}; color:${color}; padding:0.15rem 0.4rem; border-radius:5px; font-size:0.65rem; font-weight:600; white-space:normal;">${texto}</span>`;
 }
 
 
@@ -443,8 +515,13 @@ function mostrarResumenFiltros() {
   const textoSector = selectSector.options[selectSector.selectedIndex]?.text || '';
   const [anio, mes, dia] = inputFecha.value.split('-');
   const fechaFormateada = `${dia}/${mes}/${anio}`;
-  document.getElementById('resumen-filtros').textContent =
-    `Sector: ${textoSector}  •  Fecha: ${fechaFormateada}`;
+  const usuario = localStorage.getItem('usuario') || '';
+  const texto = `Sector: ${textoSector}  •  Fecha: ${fechaFormateada}  •  Generado por: ${usuario}`;
+
+  document.getElementById('resumen-filtros').textContent = texto;
+
+  const resumenImpresion = document.getElementById('resumen-impresion');
+  if (resumenImpresion) resumenImpresion.textContent = texto;
 }
 
 async function guardarRacionSiguiente(indice, idEstanque) {
@@ -511,10 +588,11 @@ function formatearNumero(valor) {
 cargarCombos();
 document.getElementById('btn-exportar-excel').addEventListener('click', exportarExcel);
 document.getElementById('btn-copiar-imagen').addEventListener('click', copiarImagen);
+document.getElementById('btn-imprimir').addEventListener('click', () => window.print());
+
 function leerFilasVisibles() {
   const filas = [];
   document.querySelectorAll('#tabla-reporte > tbody > tr').forEach(tr => {
-    // Salta las filas de historial (tienen colspan, no las de datos)
     if (tr.querySelector('td[colspan]')) return;
 
     const c = tr.querySelectorAll('td');
@@ -525,9 +603,13 @@ function leerFilasVisibles() {
       'Ración': c[4].textContent.replace(/,/g, '').trim(),
       'Libras consumo': c[5].textContent.replace(/,/g, '').trim(),
       '%': c[6].textContent.trim(),
-      'Lectura mañana': c[7].textContent.trim(),
-      'Lectura tarde': c[8].textContent.trim(),
-      'Ración día siguiente': (c[9].querySelector('input')?.value || '').replace(/,/g, '')
+      'O2 mañana': c[7].textContent.trim(),
+      'O2 noche': c[8].textContent.trim(),
+      'Temp. mañana': c[9].textContent.trim(),
+      'Temp. tarde': c[10].textContent.trim(),
+      'Lectura mañana': c[11].textContent.trim(),
+      'Lectura tarde': c[12].textContent.trim(),
+      'Ración día siguiente': (c[13].querySelector('input')?.value || '').replace(/,/g, '')
     });
   });
   return filas;
@@ -573,29 +655,30 @@ async function construirElementoParaImagen() {
     input.replaceWith(span);
   });
 
-// Quitar del clon las filas cuyo historial NO está desplegado
-const filasHistorial = Array.from(tablaClonada.querySelectorAll('tr[id^="fila-historial-"]'));
-const algunaAbierta = filasHistorial.some(f => f.style.display !== 'none');
+  // Quitar del clon las filas cuyo historial NO está desplegado
+  const filasHistorial = Array.from(tablaClonada.querySelectorAll('tr[id^="fila-historial-"]'));
+  const algunaAbierta = filasHistorial.some(f => f.style.display !== 'none');
 
-if (algunaAbierta) {
-  filasHistorial.forEach(filaHist => {
-    const oculta = filaHist.style.display === 'none';
-    if (oculta) {
-      const filaPrincipal = filaHist.previousElementSibling;
-      if (filaPrincipal) filaPrincipal.remove();
-      filaHist.remove();
+  if (algunaAbierta) {
+    filasHistorial.forEach(filaHist => {
+      const oculta = filaHist.style.display === 'none';
+      if (oculta) {
+        const filaPrincipal = filaHist.previousElementSibling;
+        if (filaPrincipal) filaPrincipal.remove();
+        filaHist.remove();
+      }
+    });
+  }
+
+  tablaClonada.querySelectorAll('tr').forEach(tr => {
+    const celda = tr.children[13]; // columna "Ración día siguiente"
+    if (celda) {
+      celda.style.background = '#0f799a';
+      celda.style.fontWeight = 'bold';
+      celda.style.color = 'white';
     }
   });
-}
 
-tablaClonada.querySelectorAll('tr').forEach(tr => {
-  const celda = tr.children[9]; // columna "Ración día siguiente"
-  if (celda) {
-    celda.style.background = '#0f799a';
-    celda.style.fontWeight = 'bold';
-    celda.style.color = 'white';
-  }
-  });
   temp.appendChild(tablaClonada);
   document.body.appendChild(temp);
   return temp;
