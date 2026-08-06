@@ -280,6 +280,13 @@ th, td {
     display: none !important;
   }
 
+
+    #tabla-reporte > thead > tr > th:nth-child(4),
+  #tabla-reporte > tbody > tr > td:nth-child(4) {
+    width: 8% !important;
+    white-space: nowrap !important;
+  }
+  
     #encabezado-impresion {
     display: block !important;
   }
