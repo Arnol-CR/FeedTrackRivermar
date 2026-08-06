@@ -269,7 +269,7 @@ th, td {
   font-size: 0.75rem !important;
 }
 
-@medi@media print {
+@media print {
   .sidebar,
   .topbar,
   section.formulario,
@@ -281,11 +281,7 @@ th, td {
   }
 
 
-    #tabla-reporte > thead > tr > th:nth-child(3),
-  #tabla-reporte > tbody > tr > td:nth-child(3) {
-    width: 8% !important;
-    white-space: nowrap !important;
-  }
+
   
     #encabezado-impresion {
     display: block !important;
@@ -302,6 +298,12 @@ th, td {
 
     .contenedor-reportes div[style*="overflow-x:auto"] {
     overflow: visible !important;
+  }
+
+     #tabla-reporte > thead > tr > th:nth-child(4),
+  #tabla-reporte > tbody > tr > td:nth-child(4) {
+    width: 8% !important;
+    white-space: nowrap !important;
   }
   
   #tabla-reporte thead th {
