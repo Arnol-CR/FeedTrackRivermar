@@ -242,8 +242,15 @@ router.get('/historial', async (req, res) => {
       .input('IdEstanque', sql.Int, idEstanque)
       .input('Fecha', sql.Date, fecha)
       .query(`
-        SELECT TOP 6
-          C.Fecha,
+        ;WITH Fechas AS (
+          SELECT CAST(DATEADD(DAY, -1, @Fecha) AS DATE) AS Fecha, 1 AS N
+          UNION ALL
+          SELECT DATEADD(DAY, -1, Fecha), N + 1
+          FROM Fechas
+          WHERE N < 6
+        )
+        SELECT
+          F.Fecha,
           ISNULL(C.Racion, 0) AS Racion,
           ISNULL(DC.Libras, 0) AS LibrasConsumo,
           CAST(
@@ -260,39 +267,49 @@ router.get('/historial', async (req, res) => {
           OM1.Oxigeno AS OxigenoManana,
           OM3.Oxigeno AS OxigenoHora3,
           TM1.Temperatura AS TemperaturaManana,
-          TM2.Temperatura AS TemperaturaTarde
-        FROM Consumos C
+          TM2.Temperatura AS TemperaturaTarde,
+          EQ.EquiposEncendidos AS EquiposEncendidos
+        FROM Fechas F
+        LEFT JOIN Consumos C
+          ON C.IdEstanque = @IdEstanque AND C.Fecha = F.Fecha
         OUTER APPLY (
           SELECT TOP 1 Libras FROM DetallesConsumos
           WHERE IdConsumo = C.IdConsumo AND HoraIngreso = 3
         ) DC
         OUTER APPLY (
           SELECT TOP 1 Observaciones FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = C.Fecha AND IdHora = 1
+          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 1
         ) LM
         OUTER APPLY (
           SELECT TOP 1 Observaciones FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = C.Fecha AND IdHora = 2
+          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 2
         ) LT
         OUTER APPLY (
           SELECT TOP 1 Oxigeno FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = C.Fecha AND IdHora = 1
+          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 1
         ) OM1
         OUTER APPLY (
           SELECT TOP 1 Oxigeno FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = C.Fecha AND IdHora = 3
+          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 3
         ) OM3
         OUTER APPLY (
           SELECT TOP 1 Temperatura FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = C.Fecha AND IdHora = 1
+          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 1
         ) TM1
         OUTER APPLY (
           SELECT TOP 1 Temperatura FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = C.Fecha AND IdHora = 2
+          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 2
         ) TM2
-        WHERE C.IdEstanque = @IdEstanque
-          AND C.Fecha < @Fecha
-        ORDER BY C.Fecha DESC
+        OUTER APPLY (
+          SELECT COUNT(DISTINCT V.IdEquipo) AS EquiposEncendidos
+          FROM Tracker.dbo.VW_HorasTrabajas_Bitacora V
+          WHERE V.IdUbicacionLagSector = @IdEstanque
+            AND CAST(V.FechaHoraFinal AS DATE) = F.Fecha
+            AND V.HorasTrabajadas > 0
+            AND V.TipoEquipo = 'Aireador'
+        ) EQ
+        ORDER BY F.Fecha DESC
+        OPTION (MAXRECURSION 10)
       `);
 
     res.json(result.recordset);

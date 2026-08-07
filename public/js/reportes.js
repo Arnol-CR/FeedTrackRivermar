@@ -293,7 +293,6 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
   `;
   }).join('');
 }
-
 async function toggleHistorial(indice, idEstanque) {
   const fila = document.getElementById(`fila-historial-${indice}`);
   const boton = document.getElementById(`btn-historial-${indice}`);
@@ -338,6 +337,7 @@ async function toggleHistorial(indice, idEstanque) {
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">O₂ Noche</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">C° Mañana</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">C° Tarde</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Equipos</th>
     <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Lectura Mañana</th>
     <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Lectura Tarde</th>
   </tr>
@@ -354,6 +354,7 @@ async function toggleHistorial(indice, idEstanque) {
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeOxigenoNoche(d.OxigenoHora3)}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeTemperatura(d.TemperaturaManana)}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeTemperatura(d.TemperaturaTarde)}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${d.EquiposEncendidos ?? '-'}</td>
                 <td style="padding:0.6rem 0.8rem;">${badgeEstado(d.LecturaMañana)}</td>
                 <td style="padding:0.6rem 0.8rem;">${badgeEstado(d.LecturaTarde)}</td>
               </tr>
@@ -367,7 +368,6 @@ async function toggleHistorial(indice, idEstanque) {
     contenido.innerHTML = '<em style="color:#b91c1c;">Error al cargar el historial.</em>';
   }
 }
-
 
 function formatearFecha(fechaISO) {
   const f = new Date(fechaISO);
