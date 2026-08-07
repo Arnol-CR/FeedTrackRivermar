@@ -286,7 +286,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
       </td>
     </tr>
     <tr id="fila-historial-${i}" style="display:none;">
-      <td colspan="15" style="background:#f4f5f7; padding:0;">
+      <td colspan="16" style="background:#f4f5f7; padding:0;">
         <div id="contenido-historial-${i}" style="padding:1rem 2rem;">Cargando...</div>
       </td>
     </tr>
