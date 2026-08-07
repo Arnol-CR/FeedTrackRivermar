@@ -76,7 +76,7 @@ router.get('/racion', async (req, res) => {
         .query(`
           SELECT IdUbicacionLagSector AS IdEstanque, COUNT(DISTINCT IdEquipo) AS EquiposEncendidos
           FROM Tracker.dbo.VW_HorasTrabajas_Bitacora
-          WHERE FechaHoraFinal = @Fecha
+          WHERE CAST(FechaHoraFinal AS DATE) = @Fecha
             AND HorasTrabajadas > 0
             AND IdUbicacionLagSector IN (${idsEstanques.join(',')})
             AND TipoEquipo = 'Aireador'
