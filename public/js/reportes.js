@@ -333,11 +333,12 @@ async function toggleHistorial(indice, idEstanque) {
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">%</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Ajuste 1</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Ajuste 2</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Aireadores Electricos</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">O₂ mañana</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">O₂ Noche</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">C° Mañana</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">C° Tarde</th>
-    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Equipos</th>
+    
     <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Lectura Mañana</th>
     <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Lectura Tarde</th>
   </tr>
@@ -350,11 +351,12 @@ async function toggleHistorial(indice, idEstanque) {
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgePorcentaje(d.Porcentaje)}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${d.Ajuste1 ? formatearNumero(d.Ajuste1) : '-'}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${d.Ajuste2 ? formatearNumero(d.Ajuste2) : '-'}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem;">${d.EquiposEncendidos ?? '-'}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeOxigenoManana(d.OxigenoManana)}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeOxigenoNoche(d.OxigenoHora3)}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeTemperatura(d.TemperaturaManana)}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgeTemperatura(d.TemperaturaTarde)}</td>
-                <td style="text-align:center; padding:0.6rem 0.8rem;">${d.EquiposEncendidos ?? '-'}</td>
+
                 <td style="padding:0.6rem 0.8rem;">${badgeEstado(d.LecturaMañana)}</td>
                 <td style="padding:0.6rem 0.8rem;">${badgeEstado(d.LecturaTarde)}</td>
               </tr>
