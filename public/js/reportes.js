@@ -246,6 +246,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
       </td>
       <td data-label="Laguna" style="font-weight:700; font-size:0.78rem;">${f.NombreRecipiente ?? ''}</td>
       <td data-label="Peso (g)">${badgePeso(f.PesoGramos)}</td>
+      <td data-label="Equipos">${badgeEquipos(f.EquiposEncendidos)}</td>
       <td data-label="Ajuste 1">
         <input type="text" inputmode="decimal" id="ajuste1-${i}" name="ajuste1-${i}" autocomplete="off" value="${valorAjuste1}"
           oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
@@ -535,6 +536,11 @@ function badgePeso(valor) {
   if (valor === null || valor === undefined || valor === '') return '-';
   const num = Number(valor);
   return `<span style="font-weight:700; color:#1E3A8A; font-size:0.72rem;">${num.toFixed(1)} g</span>`;
+}
+
+function badgeEquipos(valor) {
+  if (valor === null || valor === undefined) return '-';
+  return `<span style="font-weight:700; color:#1E3A8A; font-size:0.72rem;">${valor}</span>`;
 }
 
 async function guardarRacionSiguiente(indice, idEstanque) {
