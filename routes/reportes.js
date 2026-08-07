@@ -79,6 +79,7 @@ router.get('/racion', async (req, res) => {
           WHERE FechaConsumo = @Fecha
             AND HorasTrabajadas > 0
             AND IdUbicacionLagSector IN (${idsEstanques.join(',')})
+            AND IdTipoEquipo = 1
           GROUP BY IdUbicacionLagSector
         `);
       const mapaLecturas = {};
