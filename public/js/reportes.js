@@ -246,7 +246,6 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
       </td>
       <td data-label="Laguna" style="font-weight:700; font-size:0.78rem;">${f.NombreRecipiente ?? ''}</td>
       <td data-label="Peso (g)">${badgePeso(f.PesoGramos)}</td>
-      <td data-label="Equipos">${badgeEquipos(f.EquiposEncendidos)}</td>
       <td data-label="Ajuste 1">
         <input type="text" inputmode="decimal" id="ajuste1-${i}" name="ajuste1-${i}" autocomplete="off" value="${valorAjuste1}"
           oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
@@ -267,6 +266,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
       <td data-label="Consumo 50% (lb)">${formatearNumero(f.LibrasConsumo)}</td>
       <td data-label="%">${badgePorcentaje(f.Porcentaje)}</td>
       
+            <td data-label="Equipos">${badgeEquipos(f.EquiposEncendidos)}</td>
 <td data-label="O2 mañana">${badgeOxigenoManana(f.OxigenoManana)}</td>
 <td data-label="O2 noche">${badgeOxigenoNoche(f.OxigenoNoche)}</td>
 <td data-label="Temp. mañana">${badgeTemperatura(f.TemperaturaManana)}</td>
