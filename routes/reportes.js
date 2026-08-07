@@ -71,17 +71,16 @@ router.get('/racion', async (req, res) => {
           WHERE Fecha = @Fecha AND IdEstanque IN (${idsEstanques.join(',')})
         `);
 
-        const equiposResult = await pool.request()
+      const equiposResult = await pool.request()
         .input('Fecha', sql.Date, fecha)
         .query(`
           SELECT IdUbicacionLagSector AS IdEstanque, COUNT(DISTINCT IdEquipo) AS EquiposEncendidos
-          FROM VW_HorasTrabajas_Bitacora
+          FROM Tracker.dbo.VW_HorasTrabajas_Bitacora
           WHERE FechaConsumo = @Fecha
             AND HorasTrabajadas > 0
             AND IdUbicacionLagSector IN (${idsEstanques.join(',')})
           GROUP BY IdUbicacionLagSector
         `);
-
       const mapaLecturas = {};
       lecturasResult.recordset.forEach(r => { mapaLecturas[r.IdEstanque] = r; });
 
