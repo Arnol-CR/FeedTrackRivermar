@@ -692,7 +692,7 @@ async function construirElementoParaImagen() {
   }
 
   tablaClonada.querySelectorAll('tr').forEach(tr => {
-    const celda = tr.children[14]; // columna "Ración día siguiente"
+    const celda = tr.children[15]; // columna "Ración día siguiente"
     if (celda) {
       celda.style.background = '#0f799a';
       celda.style.fontWeight = 'bold';
