@@ -325,8 +325,22 @@ async function toggleHistorial(indice, idEstanque) {
     contenido.innerHTML = `
       <div style="background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
       <div style="padding:0.75rem 1rem 0; font-weight:600; color:#1E3A8A; font-size:0.85rem;">📅 Historial — últimos 6 días</div>  
-      <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-        <thead>
+      <table style="width:100%; border-collapse:collapse; font-size:0.85rem; table-layout:fixed;">
+  <colgroup>
+    <col style="width:8%">
+    <col style="width:10%">
+    <col style="width:6%">
+    <col style="width:6%">
+    <col style="width:6%">
+    <col style="width:7%">
+    <col style="width:6%">
+    <col style="width:6%">
+    <col style="width:6%">
+    <col style="width:6%">
+    <col style="width:17%">
+    <col style="width:16%">
+  </colgroup>
+  <thead>
   <tr style="background:#DBEAFE; color:#1E3A8A;">
     <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Fecha</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Consumo 100%/Ración</th>
@@ -692,7 +706,7 @@ async function construirElementoParaImagen() {
   }
 
   tablaClonada.querySelectorAll('tr').forEach(tr => {
-    const celda = tr.children[15]; // columna "Ración día siguiente"
+    const celda = tr.children[14]; // columna "Ración día siguiente"
     if (celda) {
       celda.style.background = '#0f799a';
       celda.style.fontWeight = 'bold';
