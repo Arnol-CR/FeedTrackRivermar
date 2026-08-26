@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FeedTrack Web Rivermar - Horario</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="horario">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <img src="img/logo.png" alt="FeedTrack">
+        <span>FeedTrack</span>
+      </div>
+      <nav>
+        <a href="index.html" data-page="inicio"> Inicio</a>
+        <a href="reportes.html" data-page="reportes"> Analítica</a>
+        <a href="horario.html" data-page="horario"> Programación</a>
+      </nav>
+    </aside>
+
+        <div class="main-area">
+      <header class="topbar">
+        <button id="btn-toggle-sidebar" class="btn-hamburger" aria-label="Mostrar/ocultar menú">☰</button>
+        <h1 id="page-title"></h1>
+        <div class="header-derecha">
+          <span id="usuario-actual"></span>
+          <button id="btn-logout">Cerrar sesión</button>
+        </div>
+      </header>
+
+
+  <main class="contenido">
+                  <section class="formulario">
+            
+            <form id="form-reporte">
+              <div class="campo-reporte">
+                <label for="fecha">Fecha</label>
+                <input type="date" id="fecha" required>
+              </div>
+              <div class="campo-reporte">
+                <label for="sector">Sector</label>
+                <select id="sector" required></select>
+              </div>
+              <div class="campo-reporte">
+                <label for="tipo-recipiente">Tipo de recipiente</label>
+                <select id="tipo-recipiente" required></select>
+              </div>
+              <button type="submit">Consultar</button>
+                <div class="campo-reporte">
+                  <label for="buscar-laguna">Buscar laguna</label>
+                  <input type="text" id="buscar-laguna" placeholder="🔍 Ejemplo: R17, Sonico...">
+                </div>
+            </form>
+            <div id="mensaje-reporte" class="mensaje-error" hidden></div>
+          </section>
+
+          <div id="titulo-resultados">
+            <h2 style="margin:0;">Horarios</h2>
+            <p id="resumen-filtros" style="color:#6b7280; margin:0.2rem 0 0 0;"></p>
+          </div>
+              <p id="resumen-filtros" style="color:#6b7280; margin:0.2rem 0 0 0;"></p>
+            </div>
+
+          </div>
+
+  </main>
+  </div>
+  </div>
+
+
+
+
+
+  <script src="js/layout.js"></script>
+  <script src="js/reportes.js"></script>
+</body>
+</html>

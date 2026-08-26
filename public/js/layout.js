@@ -27,7 +27,8 @@ async function manejarRespuesta(res) {
 const TITULOS_PAGINA = {
   inicio: 'Inicio',
   usuarios: 'Usuarios',
-  reportes: 'Reportes / Estadísticas'
+  reportes: 'Analítica de Campo',
+  horario: 'Programación de Raciones'
 };
 
 function inicializarLayout() {
