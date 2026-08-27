@@ -663,58 +663,46 @@ function exportarExcel() {
 }
 
 async function construirElementoParaImagen() {
-  const textoSector = selectSector.options[selectSector.selectedIndex]?.text || '';
-  const [anio, mes, dia] = inputFecha.value.split('-');
-  const fechaFormateada = `${dia}/${mes}/${anio}`;
-  const usuario = localStorage.getItem('usuario') || '';
+  // Solo dos columnas: Laguna - Modo Alimentación y Ración día siguiente.
+  // Sin logo, sin título "Bitácora", sin sector/fecha/generado por.
+  const filas = [];
+  document.querySelectorAll('#tabla-reporte > tbody > tr').forEach(tr => {
+    if (tr.querySelector('td[colspan]')) return; // salta la fila de historial desplegado
+
+    const celdaLaguna = tr.querySelector('td[data-label="Laguna"]');
+    const celdaRacion = tr.querySelector('td[data-label="Ración día siguiente"]');
+    if (!celdaLaguna || !celdaRacion) return;
+
+    const nombreLaguna = celdaLaguna.textContent.trim();
+    const inputRacion = celdaRacion.querySelector('input');
+    const valorRacion = inputRacion ? (inputRacion.value.trim() || '-') : celdaRacion.textContent.trim();
+
+    filas.push({ laguna: nombreLaguna, racion: valorRacion });
+  });
 
   const temp = document.createElement('div');
-  temp.style.cssText = 'position:fixed; left:-9999px; top:0; background:white; padding:24px; width:1400px; font-family:Inter, system-ui, sans-serif;';
+  temp.style.cssText = 'position:fixed; left:-9999px; top:0; background:white; padding:16px; width:440px; font-family:Inter, system-ui, sans-serif;';
 
-  const header = document.createElement('div');
-  header.style.cssText = 'display:flex; align-items:center; gap:16px; margin-bottom:20px; border-bottom:3px solid #4285F4; padding-bottom:16px;';
-  header.innerHTML = `
-    <img src="img/logo.png" style="width:56px; height:56px;">
-    <div>
-      <div style="font-size:22px; font-weight:700; color:#1f2933;">FeedTrack Web Rivermar</div>
-      <div style="font-size:14px; color:#6b7280;">Reporte de Ración — Sector: ${textoSector} · Fecha: ${fechaFormateada}</div>
-      <div style="font-size:13px; color:#6b7280;">Generado por: ${usuario}</div>
-    </div>
+  const tabla = document.createElement('table');
+  tabla.style.cssText = 'width:100%; border-collapse:collapse; font-size:15px;';
+  tabla.innerHTML = `
+    <thead>
+      <tr>
+        <th style="background:#1E3A8A; color:white; padding:0.6rem 0.7rem; text-align:left; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.02em;">Laguna - Modo Alimentación</th>
+        <th style="background:#1E3A8A; color:white; padding:0.6rem 0.7rem; text-align:center; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.02em;">Ración día siguiente</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${filas.map((f, i) => `
+        <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f8f9fb'};">
+          <td style="padding:0.55rem 0.7rem; border-bottom:1px solid #e2e8f0; font-weight:700; color:#1f2933;">${f.laguna}</td>
+          <td style="padding:0.55rem 0.7rem; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:700; background:#0f799a; color:white;">${f.racion}</td>
+        </tr>
+      `).join('')}
+    </tbody>
   `;
-  temp.appendChild(header);
 
-  const tablaClonada = document.getElementById('tabla-reporte').cloneNode(true);
-  tablaClonada.querySelectorAll('input').forEach(input => {
-    const span = document.createElement('span');
-    span.textContent = input.value || '-';
-    input.replaceWith(span);
-  });
-
-  // Quitar del clon las filas cuyo historial NO está desplegado
-  const filasHistorial = Array.from(tablaClonada.querySelectorAll('tr[id^="fila-historial-"]'));
-  const algunaAbierta = filasHistorial.some(f => f.style.display !== 'none');
-
-  if (algunaAbierta) {
-    filasHistorial.forEach(filaHist => {
-      const oculta = filaHist.style.display === 'none';
-      if (oculta) {
-        const filaPrincipal = filaHist.previousElementSibling;
-        if (filaPrincipal) filaPrincipal.remove();
-        filaHist.remove();
-      }
-    });
-  }
-
-  tablaClonada.querySelectorAll('tr').forEach(tr => {
-    const celda = tr.children[14]; // columna "Ración día siguiente"
-    if (celda) {
-      celda.style.background = '#0f799a';
-      celda.style.fontWeight = 'bold';
-      celda.style.color = 'white';
-    }
-  });
-
-  temp.appendChild(tablaClonada);
+  temp.appendChild(tabla);
   document.body.appendChild(temp);
   return temp;
 }
