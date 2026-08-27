@@ -717,6 +717,17 @@ async function copiarImagen() {
 
   try {
     const canvas = await html2canvas(temp, { scale: 2, backgroundColor: '#ffffff' });
+
+    // navigator.clipboard.write() solo funciona en HTTPS o localhost.
+    // Si no está disponible (por ejemplo entrando por http://IP:puerto en la red local),
+    // descargamos la imagen en vez de fallar en silencio.
+    const clipboardDisponible = window.isSecureContext && navigator.clipboard && window.ClipboardItem;
+
+    if (!clipboardDisponible) {
+      descargarCanvasComoImagen(canvas);
+      return;
+    }
+
     canvas.toBlob(async (blob) => {
       try {
         await navigator.clipboard.write([
@@ -725,7 +736,9 @@ async function copiarImagen() {
         mostrarError('✔ Imagen copiada, ya puedes pegarla (Ctrl+V)');
       } catch (err) {
         console.error('Error al copiar al portapapeles:', err);
-        mostrarError('No se pudo copiar la imagen (tu navegador podría no permitirlo)');
+        // Aunque el navegador reporte contexto seguro, algunos entornos igual
+        // bloquean el permiso; en ese caso también ofrecemos la descarga.
+        descargarCanvasComoImagen(canvas);
       }
     }, 'image/png');
   } catch (err) {
@@ -734,4 +747,19 @@ async function copiarImagen() {
   } finally {
     document.body.removeChild(temp);
   }
+}
+
+function descargarCanvasComoImagen(canvas) {
+  canvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = `Racion_${inputFecha.value}.png`;
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+    URL.revokeObjectURL(url);
+
+    mostrarError('No se pudo copiar al portapapeles (el navegador lo bloquea fuera de HTTPS). Se descargó la imagen en su lugar.');
+  }, 'image/png');
 }
