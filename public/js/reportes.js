@@ -246,6 +246,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
       </td>
       <td data-label="Laguna" style="font-weight:700; font-size:0.78rem;">${f.NombreRecipiente ?? ''}</td>
       <td data-label="Peso (g)">${badgePeso(f.PesoGramos)}</td>
+      <td data-label="Camarones/m²">${formatearNumero(f.CamaronesPorM2)}</td>
       <td data-label="Ajuste 1">
         <input type="text" inputmode="decimal" id="ajuste1-${i}" name="ajuste1-${i}" autocomplete="off" value="${valorAjuste1}"
           oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
@@ -293,6 +294,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
   `;
   }).join('');
 }
+
 async function toggleHistorial(indice, idEstanque) {
   const fila = document.getElementById(`fila-historial-${indice}`);
   const boton = document.getElementById(`btn-historial-${indice}`);
@@ -328,21 +330,23 @@ async function toggleHistorial(indice, idEstanque) {
       <table style="width:100%; border-collapse:collapse; font-size:0.85rem; table-layout:fixed;">
   <colgroup>
     <col style="width:8%">
+    <col style="width:5%">
     <col style="width:10%">
     <col style="width:6%">
     <col style="width:6%">
     <col style="width:6%">
-    <col style="width:7%">
     <col style="width:6%">
     <col style="width:6%">
     <col style="width:6%">
     <col style="width:6%">
-    <col style="width:17%">
-    <col style="width:16%">
+    <col style="width:6%">
+    <col style="width:15%">
+    <col style="width:15%">
   </colgroup>
   <thead>
   <tr style="background:#DBEAFE; color:#1E3A8A;">
     <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Fecha</th>
+    <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Camarones/m²</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Consumo 100%/Ración</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">%</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Ajuste 1</th>
@@ -361,6 +365,7 @@ async function toggleHistorial(indice, idEstanque) {
             ${dias.map((d, i) => `
               <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f8f9fb'};">
                 <td style="padding:0.6rem 0.8rem; white-space:nowrap;">${formatearFecha(d.Fecha)}</td>
+                <td style="text-align:center; padding:0.6rem 0.8rem; white-space:nowrap;">${formatearNumero(d.CamaronesPorM2)}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem; white-space:nowrap;">${formatearNumero(d.LibrasConsumo)} / ${formatearNumero(d.Racion)}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${badgePorcentaje(d.Porcentaje)}</td>
                 <td style="text-align:center; padding:0.6rem 0.8rem;">${d.Ajuste1 ? formatearNumero(d.Ajuste1) : '-'}</td>

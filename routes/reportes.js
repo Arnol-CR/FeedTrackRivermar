@@ -63,10 +63,19 @@ router.get('/racion', async (req, res) => {
         GROUP BY L.IdEstanque
       `);
 
+      // ============================================================
+      // Se agregan BW y Camarones/m2 (ya calculados en la vista
+      // PBI_Bitacoras) junto con el Peso (g) Proyectado que ya se
+      // traía aquí.
+      // ============================================================
       const pesoResult = await pool.request()
         .input('Fecha', sql.Date, fecha)
         .query(`
-          SELECT IdEstanque, [Peso (g) Proyectado] AS PesoGramos
+          SELECT
+            IdEstanque,
+            [Peso (g) Proyectado] AS PesoGramos,
+            [BW] AS BW,
+            [Camarones/m2] AS CamaronesPorM2
           FROM PBI_Bitacoras
           WHERE Fecha = @Fecha AND IdEstanque IN (${idsEstanques.join(',')})
         `);
@@ -85,19 +94,24 @@ router.get('/racion', async (req, res) => {
       const mapaLecturas = {};
       lecturasResult.recordset.forEach(r => { mapaLecturas[r.IdEstanque] = r; });
 
+      // Ahora mapaPeso guarda el objeto completo (PesoGramos, BW,
+      // CamaronesPorM2) en vez de solo el número.
       const mapaPeso = {};
-      pesoResult.recordset.forEach(r => { mapaPeso[r.IdEstanque] = r.PesoGramos; });
+      pesoResult.recordset.forEach(r => { mapaPeso[r.IdEstanque] = r; });
 
       const mapaEquipos = {};
       equiposResult.recordset.forEach(r => { mapaEquipos[r.IdEstanque] = r.EquiposEncendidos; });
 
       filas.forEach(f => {
         const l = mapaLecturas[f.IdEstanque] || {};
+        const p = mapaPeso[f.IdEstanque] || {};
         f.OxigenoManana = l.OxigenoManana ?? null;
         f.OxigenoNoche = l.OxigenoNoche ?? null;
         f.TemperaturaManana = l.TemperaturaManana ?? null;
         f.TemperaturaTarde = l.TemperaturaTarde ?? null;
-        f.PesoGramos = mapaPeso[f.IdEstanque] ?? null;
+        f.PesoGramos = p.PesoGramos ?? null;
+        f.BW = p.BW ?? null;
+        f.CamaronesPorM2 = p.CamaronesPorM2 ?? null;
         f.EquiposEncendidos = mapaEquipos[f.IdEstanque] ?? null;
       });
     }
@@ -239,78 +253,99 @@ router.get('/historial', async (req, res) => {
   try {
     const pool = await getPool();
     const result = await pool.request()
-      .input('IdEstanque', sql.Int, idEstanque)
-      .input('Fecha', sql.Date, fecha)
-      .query(`
-        ;WITH Fechas AS (
-          SELECT CAST(DATEADD(DAY, -1, @Fecha) AS DATE) AS Fecha, 1 AS N
-          UNION ALL
-          SELECT DATEADD(DAY, -1, Fecha), N + 1
-          FROM Fechas
-          WHERE N < 6
-        )
-        SELECT
-          F.Fecha,
-          ISNULL(C.Racion, 0) AS Racion,
-          ISNULL(DC.Libras, 0) AS LibrasConsumo,
-          CAST(
-            CASE
-              WHEN ISNULL(C.Racion, 0) <> 0
-              THEN (ISNULL(DC.Libras, 0) / C.Racion) * 100
-              ELSE 0
-            END
-          AS DECIMAL(18,2)) AS Porcentaje,
-          ISNULL(C.Ajuste1, 0) AS Ajuste1,
-          ISNULL(C.Ajuste2, 0) AS Ajuste2,
-          ISNULL(LM.Observaciones, '') AS LecturaMañana,
-          ISNULL(LT.Observaciones, '') AS LecturaTarde,
-          OM1.Oxigeno AS OxigenoManana,
-          OM3.Oxigeno AS OxigenoHora3,
-          TM1.Temperatura AS TemperaturaManana,
-          TM2.Temperatura AS TemperaturaTarde,
-          EQ.EquiposEncendidos AS EquiposEncendidos
-        FROM Fechas F
-        LEFT JOIN Consumos C
-          ON C.IdEstanque = @IdEstanque AND C.Fecha = F.Fecha
-        OUTER APPLY (
-          SELECT TOP 1 Libras FROM DetallesConsumos
-          WHERE IdConsumo = C.IdConsumo AND HoraIngreso = 3
-        ) DC
-        OUTER APPLY (
-          SELECT TOP 1 Observaciones FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 1
-        ) LM
-        OUTER APPLY (
-          SELECT TOP 1 Observaciones FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 2
-        ) LT
-        OUTER APPLY (
-          SELECT TOP 1 Oxigeno FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 1
-        ) OM1
-        OUTER APPLY (
-          SELECT TOP 1 Oxigeno FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 3
-        ) OM3
-        OUTER APPLY (
-          SELECT TOP 1 Temperatura FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 1
-        ) TM1
-        OUTER APPLY (
-          SELECT TOP 1 Temperatura FROM Lecturas
-          WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 2
-        ) TM2
-        OUTER APPLY (
-          SELECT COUNT(DISTINCT V.IdEquipo) AS EquiposEncendidos
-          FROM Tracker.dbo.VW_HorasTrabajas_Bitacora V
-          WHERE V.IdUbicacionLagSector = @IdEstanque
-            AND CAST(V.FechaHoraFinal AS DATE) = F.Fecha
-            AND V.HorasTrabajadas > 0
-            AND V.TipoEquipo = 'Aireador'
-        ) EQ
-        ORDER BY F.Fecha DESC
-        OPTION (MAXRECURSION 10)
-      `);
+        .input('IdEstanque', sql.Int, idEstanque)
+          .input('Fecha', sql.Date, fecha)
+          .query(`
+            ;WITH Fechas AS (
+              SELECT CAST(DATEADD(DAY, -1, @Fecha) AS DATE) AS Fecha, 1 AS N
+              UNION ALL
+              SELECT DATEADD(DAY, -1, Fecha), N + 1
+              FROM Fechas
+              WHERE N < 6
+            )
+            SELECT
+              F.Fecha,
+              ISNULL(C.Racion, 0) AS Racion,
+              ISNULL(DC.Libras, 0) AS LibrasConsumo,
+              CAST(
+                CASE
+                  WHEN ISNULL(C.Racion, 0) <> 0
+                  THEN (ISNULL(DC.Libras, 0) / C.Racion) * 100
+                  ELSE 0
+                END
+              AS DECIMAL(18,2)) AS Porcentaje,
+              ISNULL(C.Ajuste1, 0) AS Ajuste1,
+              ISNULL(C.Ajuste2, 0) AS Ajuste2,
+              ISNULL(LM.Observaciones, '') AS LecturaMañana,
+              ISNULL(LT.Observaciones, '') AS LecturaTarde,
+              OM1.Oxigeno AS OxigenoManana,
+              OM3.Oxigeno AS OxigenoHora3,
+              TM1.Temperatura AS TemperaturaManana,
+              TM2.Temperatura AS TemperaturaTarde,
+              EQ.EquiposEncendidos AS EquiposEncendidos,
+
+              -- ============================================================
+              -- Peso proyectado / BW / Camarones por m2:
+              -- se traen de la vista dbo.PBI_Bitacoras (ya calcula todo eso
+              -- con la lógica completa de muestreos, ciclos y hectáreas), en
+              -- vez de duplicar esa lógica compleja aquí.
+              -- ============================================================
+              VB.[Peso (g) Proyectado] AS PesoProyectado,
+              VB.[BW] AS BW,
+              VB.[Camarones/m2] AS CamaronesPorM2
+
+            FROM Fechas F
+            LEFT JOIN Consumos C
+              ON C.IdEstanque = @IdEstanque AND C.Fecha = F.Fecha
+            OUTER APPLY (
+              SELECT TOP 1 Libras FROM DetallesConsumos
+              WHERE IdConsumo = C.IdConsumo AND HoraIngreso = 3
+            ) DC
+            OUTER APPLY (
+              SELECT TOP 1 Observaciones FROM Lecturas
+              WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 1
+            ) LM
+            OUTER APPLY (
+              SELECT TOP 1 Observaciones FROM Lecturas
+              WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 2
+            ) LT
+            OUTER APPLY (
+              SELECT TOP 1 Oxigeno FROM Lecturas
+              WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 1
+            ) OM1
+            OUTER APPLY (
+              SELECT TOP 1 Oxigeno FROM Lecturas
+              WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 3
+            ) OM3
+            OUTER APPLY (
+              SELECT TOP 1 Temperatura FROM Lecturas
+              WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 1
+            ) TM1
+            OUTER APPLY (
+              SELECT TOP 1 Temperatura FROM Lecturas
+              WHERE IdEstanque = @IdEstanque AND Fecha = F.Fecha AND IdHora = 2
+            ) TM2
+            OUTER APPLY (
+              SELECT COUNT(DISTINCT V.IdEquipo) AS EquiposEncendidos
+              FROM Tracker.dbo.VW_HorasTrabajas_Bitacora V
+              WHERE V.IdUbicacionLagSector = @IdEstanque
+                AND CAST(V.FechaHoraFinal AS DATE) = F.Fecha
+                AND V.HorasTrabajadas > 0
+                AND V.TipoEquipo = 'Aireador'
+            ) EQ
+
+            -- ============================================================
+            -- Join a la vista PBI_Bitacoras para traer Peso Proyectado,
+            -- BW y Camarones/m2 ya calculados. La vista garantiza como
+            -- máximo una fila por IdEstanque + Fecha (WHERE Prioridad = 1),
+            -- así que este LEFT JOIN no duplica filas.
+            -- ============================================================
+            LEFT JOIN dbo.PBI_Bitacoras VB
+              ON VB.IdEstanque = @IdEstanque AND VB.Fecha = F.Fecha
+
+            ORDER BY F.Fecha DESC
+            OPTION (MAXRECURSION 10)
+          `);
 
     res.json(result.recordset);
   } catch (err) {
