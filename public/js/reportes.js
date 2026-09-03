@@ -246,7 +246,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
       </td>
       <td data-label="Laguna" style="font-weight:700; font-size:0.78rem;">${f.NombreRecipiente ?? ''}</td>
       <td data-label="Peso (g)">${badgePeso(f.PesoGramos)}</td>
-      <td data-label="Camarones/m²">${formatearNumero(f.CamaronesPorM2)}</td>
+      <td data-label="Cam/m²">${formatearNumero(f.CamaronesPorM2)}</td>
       <td data-label="Ajuste 1">
         <input type="text" inputmode="decimal" id="ajuste1-${i}" name="ajuste1-${i}" autocomplete="off" value="${valorAjuste1}"
           oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
@@ -287,7 +287,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
       </td>
     </tr>
     <tr id="fila-historial-${i}" style="display:none;">
-      <td colspan="16" style="background:#f4f5f7; padding:0;">
+      <td colspan="17" style="background:#f4f5f7; padding:0;">
         <div id="contenido-historial-${i}" style="padding:1rem 2rem;">Cargando...</div>
       </td>
     </tr>
@@ -346,7 +346,7 @@ async function toggleHistorial(indice, idEstanque) {
   <thead>
   <tr style="background:#DBEAFE; color:#1E3A8A;">
     <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Fecha</th>
-    <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Camarones/m²</th>
+    <th style="text-align:left; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Cam/m²</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Consumo 100%/Ración</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">%</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Ajuste 1</th>
@@ -638,6 +638,7 @@ function leerFilasVisibles() {
     const c = tr.querySelectorAll('td');
     filas.push({
       'Recipiente': c[1].textContent.trim(),
+      'Cam/m²': c[7].textContent.trim(),
       'Ajuste 1': (c[2].querySelector('input')?.value || '').replace(/,/g, ''),
       'Ajuste 2': (c[3].querySelector('input')?.value || '').replace(/,/g, ''),
       'Ración': c[4].textContent.replace(/,/g, '').trim(),
