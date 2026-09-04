@@ -64,9 +64,11 @@ router.get('/racion', async (req, res) => {
       `);
 
       // ============================================================
-      // Se agregan BW y Camarones/m2 (ya calculados en la vista
-      // PBI_Bitacoras) junto con el Peso (g) Proyectado que ya se
-      // traía aquí.
+      // Se agregan BW, Camarones/m2 (actual) y Camarones/m2 (día
+      // siguiente) — ya calculados en la vista PBI_Bitacoras — junto
+      // con el Peso (g) Proyectado que ya se traía aquí.
+      // El nombre de columna debe coincidir EXACTO con el de la vista:
+      // [Camarones/m2 (Día Siguiente)]
       // ============================================================
       const pesoResult = await pool.request()
         .input('Fecha', sql.Date, fecha)
@@ -76,7 +78,7 @@ router.get('/racion', async (req, res) => {
             [Peso (g) Proyectado] AS PesoGramos,
             [BW] AS BW,
             [Camarones/m2] AS CamaronesPorM2,
-            [Camarones/m2 Siguiente] AS CamaronesPorM2Siguiente
+            [Camarones/m2 (Día Siguiente)] AS CamaronesPorM2Siguiente
           FROM PBI_Bitacoras
           WHERE Fecha = @Fecha AND IdEstanque IN (${idsEstanques.join(',')})
         `);
@@ -95,8 +97,8 @@ router.get('/racion', async (req, res) => {
       const mapaLecturas = {};
       lecturasResult.recordset.forEach(r => { mapaLecturas[r.IdEstanque] = r; });
 
-      // Ahora mapaPeso guarda el objeto completo (PesoGramos, BW,
-      // CamaronesPorM2) en vez de solo el número.
+      // mapaPeso guarda el objeto completo (PesoGramos, BW,
+      // CamaronesPorM2, CamaronesPorM2Siguiente).
       const mapaPeso = {};
       pesoResult.recordset.forEach(r => { mapaPeso[r.IdEstanque] = r; });
 
@@ -113,6 +115,7 @@ router.get('/racion', async (req, res) => {
         f.PesoGramos = p.PesoGramos ?? null;
         f.BW = p.BW ?? null;
         f.CamaronesPorM2 = p.CamaronesPorM2 ?? null;
+        f.CamaronesPorM2Siguiente = p.CamaronesPorM2Siguiente ?? null;
         f.EquiposEncendidos = mapaEquipos[f.IdEstanque] ?? null;
       });
     }
