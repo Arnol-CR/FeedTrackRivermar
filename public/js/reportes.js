@@ -682,18 +682,18 @@ function leerFilasVisibles() {
     const c = tr.querySelectorAll('td');
     filas.push({
       'Recipiente': c[1].textContent.trim(),
-      'Cam/m²': c[16].textContent.trim(),
+      'Cam/m²': c[17].textContent.trim(),
       'Ajuste 1': (c[2].querySelector('input')?.value || '').replace(/,/g, ''),
       'Ajuste 2': (c[3].querySelector('input')?.value || '').replace(/,/g, ''),
-      'Ración': c[8].textContent.replace(/,/g, '').trim(),
+      'Ración': c[4].textContent.replace(/,/g, '').trim(),
       'Libras consumo': c[7].textContent.replace(/,/g, '').trim(),
       '%': c[8].textContent.trim(),
       'O2 mañana': c[9].textContent.trim(),
       'O2 noche': c[10].textContent.trim(),
-      'Temp. mañana': c[13].textContent.trim(),
-      'Temp. tarde': c[14].textContent.trim(),
-      'Lectura mañana': c[11].textContent.trim(),
-      'Lectura tarde': c[12].textContent.trim()
+      'Temp. mañana': c[12].textContent.trim(),
+      'Temp. tarde': c[13].textContent.trim(),
+      'Lectura mañana': c[14].textContent.trim(),
+      'Lectura tarde': c[15].textContent.trim()
       //'Ración día siguiente': (c[13].querySelector('input')?.value || '').replace(/,/g, '')
     });
   });
@@ -746,7 +746,7 @@ async function construirElementoParaImagen() {
       ${filas.map((f, i) => `
         <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f8f9fb'};">
           <td style="padding:0.55rem 0.7rem; border-bottom:1px solid #e2e8f0; font-weight:700; color:#1f2933;">${f.laguna}</td>
-          <td style="padding:0.55rem 0.7rem; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:700; background:#0f799a; color:white;">${f.racion}</td>
+          <td style="padding:0.55rem 0.7rem; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:700; background:#0f799a; color:white;">${f.CamaronesPorM2Siguiente}</td>
         </tr>
       `).join('')}
     </tbody>
