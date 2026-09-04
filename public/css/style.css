@@ -313,11 +313,11 @@ th, td {
     font-size: 0.55rem !important;
   }
 
-  /* Oculta la última columna (Ración día siguiente) al imprimir */
-  #tabla-reporte thead th:last-child,
-  #tabla-reporte tbody tr td:last-child {
-    display: none !important;
-  }
+/* Oculta la penúltima columna (Ración día siguiente) al imprimir */
+#tabla-reporte thead th:nth-last-child(2),
+#tabla-reporte tbody tr td:nth-last-child(2) {
+  display: none !important;
+}
 
   /* Círculos de O2/Temperatura más chicos al imprimir */
   #tabla-reporte span[style*="border-radius:50%"] {
