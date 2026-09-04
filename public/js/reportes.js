@@ -283,11 +283,12 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
               onblur="formatearCampo(this)"
               style="width:100%; box-sizing:border-box; padding:0.3rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center; font-size:0.75rem;">
           <span id="estado-racion-${i}" style="font-size:0.7rem;"></span>
+          <td data-label="Cam/m²">${formatearNumero(f.CamaronesPorM2Siguiente)}</td>
         </div>
       </td>
     </tr>
     <tr id="fila-historial-${i}" style="display:none;">
-      <td colspan="17" style="background:#f4f5f7; padding:0;">
+      <td colspan="18" style="background:#f4f5f7; padding:0;">
         <div id="contenido-historial-${i}" style="padding:1rem 2rem;">Cargando...</div>
       </td>
     </tr>
@@ -351,7 +352,7 @@ async function toggleHistorial(indice, idEstanque) {
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">%</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Ajuste 1</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Ajuste 2</th>
-    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Aireadores Electricos</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Aireador Electrico</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">O₂ mañana</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">O₂ Noche</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">C° Mañana</th>

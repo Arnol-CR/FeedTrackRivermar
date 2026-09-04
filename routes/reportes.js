@@ -75,7 +75,8 @@ router.get('/racion', async (req, res) => {
             IdEstanque,
             [Peso (g) Proyectado] AS PesoGramos,
             [BW] AS BW,
-            [Camarones/m2] AS CamaronesPorM2
+            [Camarones/m2] AS CamaronesPorM2,
+            [Camarones/m2 Siguiente] AS CamaronesPorM2Siguiente
           FROM PBI_Bitacoras
           WHERE Fecha = @Fecha AND IdEstanque IN (${idsEstanques.join(',')})
         `);
