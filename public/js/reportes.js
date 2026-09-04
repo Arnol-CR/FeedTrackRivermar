@@ -246,7 +246,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
       </td>
       <td data-label="Laguna" style="font-weight:700; font-size:0.78rem;">${f.NombreRecipiente ?? ''}</td>
       <td data-label="Peso (g)">${badgePeso(f.PesoGramos)}</td>
-      <td data-label="Cam/m²">${formatearNumero(f.CamaronesPorM2)}</td>
+      <td data-label="Cam/m² (Hoy)">${formatearNumero(f.CamaronesPorM2)}</td>
       <td data-label="Ajuste 1">
         <input type="text" inputmode="decimal" id="ajuste1-${i}" name="ajuste1-${i}" autocomplete="off" value="${valorAjuste1}"
           oninput="onCambioAjuste(${i}, ${f.IdEstanque})"
@@ -285,7 +285,7 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
           <span id="estado-racion-${i}" style="font-size:0.7rem;"></span>
         </div>
       </td>
-    <td data-label="Cam/m²">${formatearNumero(f.CamaronesPorM2Siguiente)}</td>
+    <td data-label="Cam/m² (Mañana)">${formatearNumero(f.CamaronesPorM2Siguiente)}</td>
     </tr>
     <tr id="fila-historial-${i}" style="display:none;">
       <td colspan="18" style="background:#f4f5f7; padding:0;">
