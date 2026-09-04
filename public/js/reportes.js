@@ -682,16 +682,16 @@ function leerFilasVisibles() {
     const c = tr.querySelectorAll('td');
     filas.push({
       'Recipiente': c[1].textContent.trim(),
-      'Cam/m²': c[7].textContent.trim(),
+      'Cam/m²': c[16].textContent.trim(),
       'Ajuste 1': (c[2].querySelector('input')?.value || '').replace(/,/g, ''),
       'Ajuste 2': (c[3].querySelector('input')?.value || '').replace(/,/g, ''),
-      'Ración': c[4].textContent.replace(/,/g, '').trim(),
-      'Libras consumo': c[5].textContent.replace(/,/g, '').trim(),
-      '%': c[6].textContent.trim(),
-      'O2 mañana': c[7].textContent.trim(),
-      'O2 noche': c[8].textContent.trim(),
-      'Temp. mañana': c[9].textContent.trim(),
-      'Temp. tarde': c[10].textContent.trim(),
+      'Ración': c[8].textContent.replace(/,/g, '').trim(),
+      'Libras consumo': c[7].textContent.replace(/,/g, '').trim(),
+      '%': c[8].textContent.trim(),
+      'O2 mañana': c[9].textContent.trim(),
+      'O2 noche': c[10].textContent.trim(),
+      'Temp. mañana': c[13].textContent.trim(),
+      'Temp. tarde': c[14].textContent.trim(),
       'Lectura mañana': c[11].textContent.trim(),
       'Lectura tarde': c[12].textContent.trim()
       //'Ración día siguiente': (c[13].querySelector('input')?.value || '').replace(/,/g, '')
