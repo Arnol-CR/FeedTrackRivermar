@@ -283,9 +283,9 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
               onblur="formatearCampo(this)"
               style="width:100%; box-sizing:border-box; padding:0.3rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center; font-size:0.75rem;">
           <span id="estado-racion-${i}" style="font-size:0.7rem;"></span>
-          <td data-label="Cam/m²">${formatearNumero(f.CamaronesPorM2Siguiente)}</td>
         </div>
       </td>
+    <td data-label="Cam/m²">${formatearNumero(f.CamaronesPorM2Siguiente)}</td>
     </tr>
     <tr id="fila-historial-${i}" style="display:none;">
       <td colspan="18" style="background:#f4f5f7; padding:0;">
