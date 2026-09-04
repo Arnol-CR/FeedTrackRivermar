@@ -74,13 +74,15 @@ router.get('/racion', async (req, res) => {
         .input('Fecha', sql.Date, fecha)
         .query(`
           SELECT
-            IdEstanque,
-            [Peso (g) Proyectado] AS PesoGramos,
-            [BW] AS BW,
-            [Camarones/m2] AS CamaronesPorM2,
-            [Camarones/m2 (Día Siguiente)] AS CamaronesPorM2Siguiente
-          FROM PBI_Bitacoras
-          WHERE Fecha = @Fecha AND IdEstanque IN (${idsEstanques.join(',')})
+            B.IdEstanque,
+            B.[Peso (g) Proyectado] AS PesoGramos,
+            B.[BW] AS BW,
+            B.[Camarones/m2] AS CamaronesPorM2,
+            B.[Camarones/m2 (Día Siguiente)] AS CamaronesPorM2Siguiente,
+            PVE.Hectareas AS Hectareas
+          FROM PBI_Bitacoras B
+          LEFT JOIN dbo.P_V_Estanques PVE ON PVE.IdEstanque = B.IdEstanque
+          WHERE B.Fecha = @Fecha AND B.IdEstanque IN (${idsEstanques.join(',')})
         `);
 
       const equiposResult = await pool.request()
@@ -116,6 +118,7 @@ router.get('/racion', async (req, res) => {
         f.BW = p.BW ?? null;
         f.CamaronesPorM2 = p.CamaronesPorM2 ?? null;
         f.CamaronesPorM2Siguiente = p.CamaronesPorM2Siguiente ?? null;
+        f.Hectareas = p.Hectareas ?? null;
         f.EquiposEncendidos = mapaEquipos[f.IdEstanque] ?? null;
       });
     }

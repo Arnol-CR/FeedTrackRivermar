@@ -220,7 +220,10 @@ async function obtenerRacionesExistentes(filas) {
 const timersGuardado = {};
 const timersAjustes = {};
 
+let filasRenderizadas = [];
+
 function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes = {}) {
+  filasRenderizadas = filas;
   tbody.innerHTML = filas.map((f, i) => {
     const racionExistente = mapaRacionesExistentes[f.IdEstanque];
     const valorInicialRacion = (racionExistente !== undefined && racionExistente !== null)
@@ -278,18 +281,18 @@ function renderTabla(filas, mapaRacionesExistentes = {}, mapaAjustesExistentes =
         <div style="display:flex; gap:0.4rem; align-items:center; justify-content:center;">
           <input type="text" inputmode="decimal" placeholder="Ración"
               id="racion-siguiente-${i}" name="racion-siguiente-${i}" autocomplete="off" value="${valorInicialRacion}"
-              oninput="onCambioRacion(${i}, ${f.IdEstanque})"
+              oninput="onInputRacionSiguiente(${i}, ${f.IdEstanque})"
               onfocus="limpiarCampoParaEditar(this)"
               onblur="formatearCampo(this)"
               style="width:100%; box-sizing:border-box; padding:0.3rem; border:1px solid #cbd2d9; border-radius:4px; text-align:center; font-size:0.75rem;">
           <span id="estado-racion-${i}" style="font-size:0.7rem;"></span>
         </div>
       </td>
-    <td data-label="Cam/m² (Mañana)">${formatearNumero(f.CamaronesPorM2Siguiente)}</td>
+    <td data-label="Cam/m² (Mañana)" id="cam-manana-${i}">${formatearNumero(f.CamaronesPorM2Siguiente)}</td>
     </tr>
     <tr id="fila-historial-${i}" style="display:none;">
       <td colspan="18" style="background:#f4f5f7; padding:0;">
-        <div id="contenido-historial-${i}" style="padding:1rem 2rem;">Cargando...</div>
+        <div id="contenido-historial-${i}" style="padding:0.5rem;">Cargando...</div>
       </td>
     </tr>
   `;
@@ -326,7 +329,7 @@ async function toggleHistorial(indice, idEstanque) {
     }
 
     contenido.innerHTML = `
-      <div style="background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+      <div style="background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1); width:100%; box-sizing:border-box;">
       <div style="padding:0.75rem 1rem 0; font-weight:600; color:#1E3A8A; font-size:0.85rem;">📅 Historial — últimos 6 días</div>  
       <table style="width:100%; border-collapse:collapse; font-size:0.85rem; table-layout:fixed;">
   <colgroup>
@@ -352,7 +355,7 @@ async function toggleHistorial(indice, idEstanque) {
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">%</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Ajuste 1</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Ajuste 2</th>
-    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Aireador Electrico</th>
+    <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">Aireadores Electricos</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">O₂ mañana</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">O₂ Noche</th>
     <th style="text-align:center; padding:0.4rem 0.8rem; font-size:0.75rem; background:#DBEAFE; color:#1E3A8A;">C° Mañana</th>
@@ -399,6 +402,47 @@ function formatearFecha(fechaISO) {
   return `${dia}/${mes}/${anio}`;
 }
 
+
+// Se dispara al escribir en "Ración día siguiente": recalcula Cam/m² (Mañana)
+// EN VIVO en el navegador (sin ir al servidor), y además dispara el guardado
+// normal de la ración (con el mismo debounce de siempre).
+function onInputRacionSiguiente(indice, idEstanque) {
+  recalcularCamaronesManana(indice);
+  onCambioRacion(indice, idEstanque);
+}
+
+// Recalcula Cam/m² (Mañana) usando la misma fórmula que la vista PBI_Bitacoras:
+// ((Racion / BW) * 454 / PesoProyectado) / (Hectareas * 10000)
+// BW, PesoGramos y Hectareas ya vienen en la fila (no cambian al escribir la
+// ración), solo cambia el valor de Racion que el usuario está escribiendo.
+function recalcularCamaronesManana(indice) {
+  const celda = document.getElementById(`cam-manana-${indice}`);
+  if (!celda) return;
+
+  const fila = filasRenderizadas[indice];
+  const input = document.getElementById(`racion-siguiente-${indice}`);
+  const racion = Number(limpiarNumero(input.value));
+
+  const bw = fila ? Number(fila.BW) : NaN;
+  const peso = fila ? Number(fila.PesoGramos) : NaN;
+  const hectareas = fila ? Number(fila.Hectareas) : NaN;
+
+  const datosValidos =
+    fila && input.value !== '' && !isNaN(racion) && racion > 0 &&
+    !isNaN(bw) && bw > 0 &&
+    !isNaN(peso) && peso > 0 &&
+    !isNaN(hectareas) && hectareas > 0;
+
+  if (!datosValidos) {
+    // Sin ración escrita (o sin BW/Peso/Hectareas), se muestra el valor que
+    // ya trajo el servidor (Consumos.Racion del día siguiente, si existe).
+    celda.textContent = formatearNumero(fila ? fila.CamaronesPorM2Siguiente : null);
+    return;
+  }
+
+  const camaronesM2 = ((racion / bw) * 454 / peso) / (hectareas * 10000);
+  celda.textContent = formatearNumero(camaronesM2);
+}
 
 function onCambioAjuste(indice, idEstanque) {
   const estado = document.getElementById(`estado-ajuste-${indice}`);
