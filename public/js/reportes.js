@@ -694,8 +694,8 @@ function leerFilasVisibles() {
       'Temp. mañana': c[9].textContent.trim(),
       'Temp. tarde': c[10].textContent.trim(),
       'Lectura mañana': c[11].textContent.trim(),
-      'Lectura tarde': c[12].textContent.trim(),
-      'Ración día siguiente': (c[13].querySelector('input')?.value || '').replace(/,/g, '')
+      'Lectura tarde': c[12].textContent.trim()
+      //'Ración día siguiente': (c[13].querySelector('input')?.value || '').replace(/,/g, '')
     });
   });
   return filas;
